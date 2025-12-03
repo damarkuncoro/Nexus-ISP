@@ -19,8 +19,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   
   const { currentUser, loginAs, hasPermission } = useAuth();
 
-  const NavItem = ({ view, icon: Icon, label, protectedRole }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts', icon: any, label: string, protectedRole?: boolean }) => {
-    // Basic protection logic for sidebar visibility
+  const NavItem = ({ view, icon: Icon, label }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts', icon: any, label: string }) => {
     if (view === 'settings' && !hasPermission('manage_settings')) return null;
     if (view === 'employees' && !hasPermission('manage_team')) return null;
     
@@ -45,8 +44,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   const handleRoleSwitch = (role: EmployeeRole) => {
     loginAs(role);
     setIsProfileMenuOpen(false);
-    // If user is on a restricted page and switches to a role that can't see it, 
-    // App.tsx handles the access denied, or we can redirect here:
     if (role === EmployeeRole.SUPPORT && (currentView === 'settings' || currentView === 'employees' || currentView === 'network')) {
         onViewChange('dashboard');
     }
@@ -123,7 +120,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
       )}
 
       {/* Main Content */}
-      <FlexItem grow={1} className="md:ml-64 pt-16 md:pt-0 min-h-screen">
+      <FlexItem grow className="md:ml-64 pt-16 md:pt-0 min-h-screen" as="main">
         {/* Top Navbar (Desktop) */}
         <Flex align="center" justify="between" className="hidden md:flex h-16 bg-white border-b border-gray-200 px-8 sticky top-0 z-10">
            <div className="text-sm text-gray-500">

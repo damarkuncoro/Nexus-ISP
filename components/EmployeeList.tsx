@@ -1,7 +1,10 @@
+
 import React, { useState } from 'react';
 import { Employee } from '../types';
 import { Search, Mail, Phone, Briefcase, Trash2, Edit2, ChevronRight } from 'lucide-react';
 import { RoleBadge, EmployeeStatusBadge } from './StatusBadges';
+import { Flex, FlexItem } from './ui/flex';
+import { Input } from './ui/input';
 
 interface EmployeeListProps {
   employees: Employee[];
@@ -27,9 +30,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, o
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
           </div>
-          <input
+          <Input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out"
+            className="pl-10"
             placeholder="Search team members..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -44,40 +47,40 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, o
             onClick={() => onSelect && onSelect(employee)}
             className={`hover:bg-gray-50 transition-colors duration-150 cursor-pointer group`}
           >
-            <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
-              <div className="flex items-center gap-4 min-w-0 flex-1">
+            <Flex align="center" justify="between" className="px-4 py-4 sm:px-6">
+              <Flex align="center" gap={4} className="min-w-0 flex-1">
                 <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm">
                   {employee.name.charAt(0)}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                <FlexItem grow className="min-w-0">
+                  <Flex align="center" gap={2} className="mb-1">
                     <h3 className="text-sm font-medium text-gray-900 truncate group-hover:text-primary-600 transition-colors">{employee.name}</h3>
                     <RoleBadge role={employee.role} />
                     <EmployeeStatusBadge status={employee.status} />
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center">
+                  </Flex>
+                  <Flex align="center" gap={4} className="text-xs text-gray-500">
+                    <Flex align="center">
                       <Mail className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-gray-400" />
                       <span className="truncate">{employee.email}</span>
-                    </div>
+                    </Flex>
                     {employee.phone && (
-                        <div className="flex items-center">
+                        <Flex align="center">
                         <Phone className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-gray-400" />
                         <span className="truncate">{employee.phone}</span>
-                        </div>
+                        </Flex>
                     )}
                     {employee.department && (
-                        <div className="flex items-center">
+                        <Flex align="center">
                         <Briefcase className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-gray-400" />
                         <span className="truncate">{employee.department}</span>
-                        </div>
+                        </Flex>
                     )}
-                  </div>
-                </div>
-              </div>
+                  </Flex>
+                </FlexItem>
+              </Flex>
 
-              <div className="flex items-center gap-2">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+              <Flex align="center" gap={2}>
+                <Flex gap={2} className="opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -96,10 +99,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, o
                     >
                     <Trash2 className="w-4 h-4" />
                     </button>
-                </div>
+                </Flex>
                 {onSelect && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400" />}
-              </div>
-            </div>
+              </Flex>
+            </Flex>
           </li>
         ))}
         {filteredEmployees.length === 0 && (

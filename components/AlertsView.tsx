@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
 import { Alert, Ticket, TicketStatus, TicketPriority } from '../types';
-import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { AlertTriangle, Server, Wifi, RefreshCw, ArrowRight } from 'lucide-react';
+import { Server, RefreshCw, ArrowRight } from 'lucide-react';
+import { Flex } from './ui/flex';
+import { Grid } from './ui/grid';
 
 interface AlertsViewProps {
   onCreateTicket: (ticket: Partial<Ticket>) => void;
@@ -39,7 +40,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ onCreateTicket }) => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex justify-between items-center">
+        <Flex justify="between" align="center">
             <div>
                 <h2 className="text-2xl font-bold text-gray-900">NOC Alerts Dashboard</h2>
                 <p className="text-gray-500">Real-time infrastructure monitoring events.</p>
@@ -47,33 +48,33 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ onCreateTicket }) => {
             <Button variant="outline" onClick={() => setAlerts([...MOCK_ALERTS])}>
                 <RefreshCw className="w-4 h-4 mr-2" /> Refresh
             </Button>
-        </div>
+        </Flex>
 
-        <div className="grid grid-cols-1 gap-4">
+        <Grid cols={1} gap={4}>
             {alerts.map(alert => (
                 <Card key={alert.id} className="hover:shadow-md transition-shadow">
-                    <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-start gap-4">
+                    <Flex direction="col" justify="between" gap={4} className="p-4 sm:flex-row sm:items-center">
+                        <Flex align="start" gap={4}>
                             <div className={`p-3 rounded-lg ${alert.severity === 'critical' ? 'bg-red-50' : 'bg-gray-50'}`}>
                                 <Server className={`w-6 h-6 ${alert.severity === 'critical' ? 'text-red-500' : 'text-gray-500'}`} />
                             </div>
                             <div>
-                                <div className="flex items-center gap-2 mb-1">
+                                <Flex align="center" gap={2} className="mb-1">
                                     <h4 className="font-bold text-gray-900">{alert.device_name}</h4>
                                     <Badge className={getSeverityColor(alert.severity)}>
                                         {alert.severity.toUpperCase()}
                                     </Badge>
                                     <span className="text-xs text-gray-400">{alert.source}</span>
-                                </div>
+                                </Flex>
                                 <p className="text-sm text-gray-600">{alert.message}</p>
                                 <p className="text-xs text-gray-400 mt-1">{new Date(alert.timestamp).toLocaleString()}</p>
                             </div>
-                        </div>
+                        </Flex>
                         
                         <Button size="sm" onClick={() => handleCreateTicket(alert)}>
                             Create Ticket <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
-                    </div>
+                    </Flex>
                 </Card>
             ))}
             {alerts.length === 0 && (
@@ -81,7 +82,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({ onCreateTicket }) => {
                     No active alerts. Systems normal.
                 </div>
             )}
-        </div>
+        </Grid>
     </div>
   );
 };

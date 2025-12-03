@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Customer, Invoice, InvoiceStatus, SubscriptionPlan } from '../types';
 import { useBilling } from '../hooks/useBilling';
@@ -10,6 +9,7 @@ import { downloadInvoice } from '../utils/invoiceGenerator';
 import { PaymentMethodModal } from './PaymentMethodModal';
 import { Grid, GridItem } from './ui/grid';
 import { Flex } from './ui/flex';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/table';
 
 interface BillingSectionProps {
   customer: Customer;
@@ -136,96 +136,94 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
               {isGenerating ? 'Generating...' : 'Generate New Invoice'}
             </button>
           </Flex>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issued</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {invoices.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
-                      No invoices found. Generate one to get started.
-                    </td>
-                  </tr>
-                ) : (
-                  invoices.map((inv) => (
-                    <tr 
-                        key={inv.id} 
-                        onClick={() => setSelectedInvoice(inv)}
-                        className="hover:bg-gray-50 transition-colors group cursor-pointer"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors">{inv.invoice_number}</div>
-                        <div className="text-xs text-gray-500 truncate max-w-[150px]" title={inv.description}>
-                            {inv.description || 'General Service'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(inv.issued_date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                         <Flex align="center" gap={1} className={isOverdue(inv) ? 'text-red-600 font-medium' : 'text-gray-500'}>
-                             {formatDate(inv.due_date)}
-                             {isOverdue(inv) && <AlertCircle className="w-3 h-3" />}
-                         </Flex>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {formatCurrency(inv.amount, currency)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <InvoiceStatusBadge status={inv.status} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                         <Flex justify="end" gap={2} className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                            <button
-                               onClick={(e) => {
-                                   e.stopPropagation();
-                                   handleDownloadInvoice(inv);
-                               }}
-                               className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded border border-blue-200"
-                               title="Download Invoice"
-                            >
-                               <Download className="w-3 h-3" />
-                            </button>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Details</TableHead>
+                <TableHead>Issued</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-sm text-gray-500 py-8">
+                    No invoices found. Generate one to get started.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                invoices.map((inv) => (
+                  <TableRow 
+                      key={inv.id} 
+                      onClick={() => setSelectedInvoice(inv)}
+                      className="group cursor-pointer"
+                  >
+                    <TableCell>
+                      <div className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors">{inv.invoice_number}</div>
+                      <div className="text-xs text-gray-500 truncate max-w-[150px]" title={inv.description}>
+                          {inv.description || 'General Service'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(inv.issued_date)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">
+                       <Flex align="center" gap={1} className={isOverdue(inv) ? 'text-red-600 font-medium' : 'text-gray-500'}>
+                           {formatDate(inv.due_date)}
+                           {isOverdue(inv) && <AlertCircle className="w-3 h-3" />}
+                       </Flex>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm font-medium text-gray-900">
+                      {formatCurrency(inv.amount, currency)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      <InvoiceStatusBadge status={inv.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                       <Flex justify="end" gap={2} className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <button
+                             onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleDownloadInvoice(inv);
+                             }}
+                             className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded border border-blue-200"
+                             title="Download Invoice"
+                          >
+                             <Download className="w-3 h-3" />
+                          </button>
 
-                            {inv.status === InvoiceStatus.PENDING || inv.status === InvoiceStatus.OVERDUE ? (
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleUpdateStatus(inv.id, InvoiceStatus.PAID);
-                                    }}
-                                    className="text-xs bg-green-50 text-green-600 hover:bg-green-100 px-2 py-1 rounded border border-green-200"
-                                >
-                                    Mark Paid
-                                </button>
-                            ) : null}
-                            {inv.status !== InvoiceStatus.CANCELLED && inv.status !== InvoiceStatus.PAID && (
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (window.confirm("Cancel Invoice?")) handleUpdateStatus(inv.id, InvoiceStatus.CANCELLED);
-                                    }}
-                                    className="text-xs bg-gray-50 text-gray-500 hover:bg-gray-100 px-2 py-1 rounded border border-gray-200"
-                                >
-                                    Cancel
-                                </button>
-                            )}
-                         </Flex>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                          {inv.status === InvoiceStatus.PENDING || inv.status === InvoiceStatus.OVERDUE ? (
+                              <button 
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUpdateStatus(inv.id, InvoiceStatus.PAID);
+                                  }}
+                                  className="text-xs bg-green-50 text-green-600 hover:bg-green-100 px-2 py-1 rounded border border-green-200"
+                              >
+                                  Mark Paid
+                              </button>
+                          ) : null}
+                          {inv.status !== InvoiceStatus.CANCELLED && inv.status !== InvoiceStatus.PAID && (
+                              <button 
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (window.confirm("Cancel Invoice?")) handleUpdateStatus(inv.id, InvoiceStatus.CANCELLED);
+                                  }}
+                                  className="text-xs bg-gray-50 text-gray-500 hover:bg-gray-100 px-2 py-1 rounded border border-gray-200"
+                              >
+                                  Cancel
+                              </button>
+                          )}
+                       </Flex>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </GridItem>
 
         <GridItem className="lg:col-span-1 space-y-6">

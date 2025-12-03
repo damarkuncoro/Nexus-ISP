@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { Customer, CustomerStatus, SubscriptionPlan, CustomerType, InstallationStatus } from '../types';
 import { Save, ArrowLeft } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
+import { Input } from './ui/input';
+import { Select } from './ui/select';
+import { Button } from './ui/button';
+import { Label } from './ui/label';
+import { Grid } from './ui/grid';
 
 interface CustomerFormProps {
   onClose: () => void;
@@ -41,7 +47,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
         subscription_plan: selectedPlan ? selectedPlan.name : undefined,
         account_status: accountStatus
       });
-      // Cleanup usually handled by parent changing view
     } finally {
       setIsSubmitting(false);
     }
@@ -49,30 +54,28 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
 
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6 flex items-center justify-between">
-         <button 
+      <div className="mb-6">
+         <Button 
+           variant="ghost"
            onClick={onClose} 
-           className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
          >
              <ArrowLeft className="w-5 h-5 mr-2" /> Back to Subscribers
-         </button>
+         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-8 py-6 border-b border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900">Add New Subscriber</h3>
-            <p className="text-sm text-gray-500 mt-1">Register a new customer account in the system.</p>
-          </div>
+      <Card>
+          <CardHeader>
+            <CardTitle>Add New Subscriber</CardTitle>
+            <CardDescription>Register a new customer account in the system.</CardDescription>
+          </CardHeader>
             
           <form onSubmit={handleSubmit}>
-            <div className="p-8 space-y-6">
+            <CardContent className="space-y-6">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input
-                  type="text"
+                <Label htmlFor="name">Full Name</Label>
+                <Input
                   id="name"
                   required
-                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg p-2.5 border"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
@@ -80,12 +83,11 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
-                <input
+                <Label htmlFor="email">Email Address</Label>
+                <Input
                   type="email"
                   id="email"
                   required
-                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg p-2.5 border"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="john@example.com"
@@ -93,12 +95,11 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <input
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
                   type="tel"
                   id="phone"
                   required
-                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg p-2.5 border"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1234567890"
@@ -106,24 +107,21 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
               </div>
 
               <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700">Service Address</label>
-                <input
-                  type="text"
+                <Label htmlFor="address">Service Address</Label>
+                <Input
                   id="address"
-                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg p-2.5 border"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="123 Fiber Optic Way, Tech City"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Grid cols={1} className="md:grid-cols-2" gap={6}>
                 <div>
-                  <label htmlFor="plan" className="block text-sm font-medium text-gray-700">Subscription Plan</label>
+                  <Label htmlFor="plan">Subscription Plan</Label>
                   {hasPlans ? (
-                    <select
+                    <Select
                       id="plan"
-                      className="mt-1 block w-full py-2.5 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                       value={selectedPlanId}
                       onChange={(e) => setSelectedPlanId(e.target.value)}
                     >
@@ -133,13 +131,11 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
                           {plan.name} ({formatCurrency(plan.price, currency)})
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   ) : (
-                    <input
-                      type="text"
+                    <Input
                       disabled
                       placeholder="No plans defined"
-                      className="mt-1 block w-full bg-gray-100 rounded-lg border-gray-300 shadow-sm sm:text-sm border p-2.5"
                     />
                   )}
                   {!hasPlans && (
@@ -148,23 +144,20 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
                 </div>
                 
                 <div>
-                  <label htmlFor="company" className="block text-sm font-medium text-gray-700">Company (Optional)</label>
-                  <input
-                    type="text"
+                  <Label htmlFor="company">Company (Optional)</Label>
+                  <Input
                     id="company"
-                    className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg p-2.5 border"
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Acme Inc."
                   />
                 </div>
-              </div>
+              </Grid>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">Account Status</label>
-                <select
+                <Label htmlFor="status">Account Status</Label>
+                <Select
                   id="status"
-                  className="mt-1 block w-full py-2.5 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                   value={accountStatus}
                   onChange={(e) => setAccountStatus(e.target.value as CustomerStatus)}
                 >
@@ -172,33 +165,29 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
                   <option value={CustomerStatus.PENDING}>Pending Installation</option>
                   <option value={CustomerStatus.SUSPENDED}>Suspended (Non-payment)</option>
                   <option value={CustomerStatus.CANCELLED}>Cancelled</option>
-                </select>
+                </Select>
               </div>
-            </div>
+            </CardContent>
 
-            <div className="bg-gray-50 px-8 py-5 border-t border-gray-200 flex justify-end gap-3">
-                <button
+            <CardFooter className="flex justify-end gap-3 bg-gray-50/50">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={onClose}
-                  className="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex justify-center rounded-lg border border-transparent shadow-sm px-6 py-2.5 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  isLoading={isSubmitting}
                 >
-                  {isSubmitting ? 'Saving...' : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Subscriber
-                    </>
-                  )}
-                </button>
-            </div>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Subscriber
+                </Button>
+            </CardFooter>
           </form>
-      </div>
+      </Card>
     </div>
   );
 };

@@ -1,7 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Customer } from '../types';
 import { Search, Mail, Building, Trash2, MapPin, Wifi, ChevronRight } from 'lucide-react';
 import { CustomerStatusBadge } from './StatusBadges';
+import { Flex, FlexItem } from './ui/flex';
+import { Grid, GridItem } from './ui/grid';
+import { Input } from './ui/input';
 
 interface CustomerListProps {
   customers: Customer[];
@@ -13,7 +17,6 @@ interface CustomerListProps {
 export const CustomerList: React.FC<CustomerListProps> = ({ customers, onDelete, onSelect, initialSearch = '' }) => {
   const [searchTerm, setSearchTerm] = useState(initialSearch);
 
-  // Update local search term if the prop changes (e.g. navigation from another component)
   useEffect(() => {
     setSearchTerm(initialSearch);
   }, [initialSearch]);
@@ -27,20 +30,20 @@ export const CustomerList: React.FC<CustomerListProps> = ({ customers, onDelete,
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="p-4 border-b border-gray-200 bg-gray-50 flex items-center">
+      <Flex align="center" className="p-4 border-b border-gray-200 bg-gray-50">
         <div className="relative w-full sm:w-96">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
           </div>
-          <input
+          <Input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm transition duration-150 ease-in-out"
+            className="pl-10"
             placeholder="Search subscribers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-      </div>
+      </Flex>
 
       <ul className="divide-y divide-gray-100">
         {filteredCustomers.map((customer) => (
@@ -49,43 +52,43 @@ export const CustomerList: React.FC<CustomerListProps> = ({ customers, onDelete,
             onClick={() => onSelect && onSelect(customer)}
             className={`hover:bg-gray-50 transition-colors duration-150 group ${onSelect ? 'cursor-pointer' : ''}`}
           >
-            <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-3">
+            <Flex align="center" justify="between" className="px-4 py-4 sm:px-6">
+              <FlexItem grow className="min-w-0">
+                <Flex align="center" gap={3}>
                   <h3 className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors">{customer.name}</h3>
                   <CustomerStatusBadge status={customer.account_status} />
                   {customer.company && (
-                     <span className="flex items-center text-xs text-gray-400">
+                     <Flex as="span" align="center" className="text-xs text-gray-400">
                         <Building className="w-3 h-3 mr-1" />
                         {customer.company}
-                     </span>
+                     </Flex>
                   )}
-                </div>
+                </Flex>
                 
-                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-500">
-                  <div className="flex items-center">
+                <Grid cols={1} className="sm:grid-cols-2 mt-2 gap-2 text-sm text-gray-500">
+                  <Flex align="center">
                     <Mail className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                     <span className="truncate">{customer.email}</span>
-                  </div>
+                  </Flex>
                   {customer.subscription_plan && (
-                    <div className="flex items-center">
+                    <Flex align="center">
                       <Wifi className="flex-shrink-0 mr-1.5 h-4 w-4 text-primary-400" />
                       <span className="font-medium text-gray-700">{customer.subscription_plan}</span>
-                    </div>
+                    </Flex>
                   )}
                   {customer.address && (
-                    <div className="flex items-center col-span-1 sm:col-span-2">
+                    <Flex align="center" className="col-span-1 sm:col-span-2">
                       <MapPin className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                       <span className="truncate">{customer.address}</span>
-                    </div>
+                    </Flex>
                   )}
-                </div>
-              </div>
+                </Grid>
+              </FlexItem>
               
-              <div className="ml-4 flex items-center gap-4">
+              <Flex align="center" gap={4} className="ml-4">
                 <button 
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent row click
+                    e.stopPropagation();
                     onDelete(customer.id);
                   }}
                   className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
@@ -96,8 +99,8 @@ export const CustomerList: React.FC<CustomerListProps> = ({ customers, onDelete,
                 {onSelect && (
                     <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400" />
                 )}
-              </div>
-            </div>
+              </Flex>
+            </Flex>
           </li>
         ))}
         {filteredCustomers.length === 0 && (

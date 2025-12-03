@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { SubscriptionPlan } from '../types';
 import { Save, Wifi, ArrowLeft } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { Label } from './ui/label';
+import { Grid } from './ui/grid';
 
 interface PlanFormProps {
   onClose: () => void;
@@ -42,7 +47,6 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
         download_speed: downloadSpeed,
         upload_speed: uploadSpeed
       });
-      // onClose usually triggered by parent update
     } catch (err) {
       // Error handled by parent
     } finally {
@@ -52,36 +56,34 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
 
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6 flex items-center justify-between">
-         <button 
+      <div className="mb-6">
+         <Button 
+           variant="ghost"
            onClick={onClose} 
-           className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
          >
              <ArrowLeft className="w-5 h-5 mr-2" /> Back to Plans
-         </button>
+         </Button>
       </div>
       
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-8 py-6 border-b border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900">
-                {initialData ? 'Edit Service Plan' : 'Add New Service Plan'}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">Configure plan details, pricing, and speed limits.</p>
-          </div>
+      <Card>
+          <CardHeader>
+            <CardTitle>{initialData ? 'Edit Service Plan' : 'Add New Service Plan'}</CardTitle>
+            <CardDescription>Configure plan details, pricing, and speed limits.</CardDescription>
+          </CardHeader>
             
           <form onSubmit={handleSubmit}>
-            <div className="p-8 space-y-6">
+            <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Plan Name</label>
-                <div className="mt-1 relative rounded-md shadow-sm">
+                <Label htmlFor="plan-name">Plan Name</Label>
+                <div className="relative mt-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Wifi className="h-4 w-4 text-gray-400" />
                   </div>
-                  <input
-                    type="text"
+                  <Input
+                    id="plan-name"
                     required
                     placeholder="e.g. Fiber Ultra"
-                    className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg border p-2.5"
+                    className="pl-10"
                     value={name}
                     onChange={e => setName(e.target.value)}
                   />
@@ -89,16 +91,17 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700">Monthly Price</label>
-                <div className="relative mt-1 rounded-md shadow-sm">
+                <Label htmlFor="price">Monthly Price</Label>
+                <div className="relative mt-1">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-gray-500 sm:text-sm">{currency === 'USD' ? '$' : currency}</span>
+                    <span className="text-gray-500 sm:text-sm">{currency}</span>
                   </div>
-                  <input
+                  <Input
+                    id="price"
                     type="number"
                     step="0.01"
                     required
-                    className="block w-full rounded-lg border-gray-300 pl-12 focus:border-primary-500 focus:ring-primary-500 sm:text-sm border p-2.5"
+                    className="pl-12"
                     placeholder="0.00"
                     value={price}
                     onChange={e => setPrice(e.target.value)}
@@ -106,53 +109,47 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <Grid cols={2} gap={6}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Download Speed</label>
-                  <input
-                    type="text"
+                  <Label htmlFor="download-speed">Download Speed</Label>
+                  <Input
+                    id="download-speed"
                     placeholder="100 Mbps"
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border p-2.5"
                     value={downloadSpeed}
                     onChange={e => setDownloadSpeed(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Upload Speed</label>
-                  <input
-                    type="text"
+                  <Label htmlFor="upload-speed">Upload Speed</Label>
+                  <Input
+                    id="upload-speed"
                     placeholder="20 Mbps"
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm border p-2.5"
                     value={uploadSpeed}
                     onChange={e => setUploadSpeed(e.target.value)}
                   />
                 </div>
-              </div>
-            </div>
+              </Grid>
+            </CardContent>
 
-            <div className="bg-gray-50 px-8 py-5 border-t border-gray-200 flex justify-end gap-3">
-                <button
+            <CardFooter className="flex justify-end gap-3 bg-gray-50/50">
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={onClose}
-                  className="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex justify-center rounded-lg border border-transparent shadow-sm px-6 py-2.5 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm disabled:opacity-50"
+                  isLoading={isSubmitting}
                 >
-                  {isSubmitting ? 'Saving...' : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Plan
-                    </>
-                  )}
-                </button>
-            </div>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Plan
+                </Button>
+            </CardFooter>
           </form>
-      </div>
+      </Card>
     </div>
   );
 };

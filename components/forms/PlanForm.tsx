@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
+import { Grid } from '../ui/grid';
 
 interface PlanFormProps {
   onClose: () => void;
@@ -55,11 +56,10 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
 
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
          <Button 
            variant="ghost"
            onClick={onClose} 
-           className="text-gray-600 hover:text-gray-900 pl-0"
          >
              <ArrowLeft className="w-5 h-5 mr-2" /> Back to Plans
          </Button>
@@ -74,77 +74,40 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div>
-                <Label className="mb-1 block">Plan Name</Label>
-                <div className="relative">
+                <Label htmlFor="plan-name">Plan Name</Label>
+                <div className="relative mt-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Wifi className="h-4 w-4 text-gray-400" />
                   </div>
-                  <Input
-                    required
-                    placeholder="e.g. Fiber Ultra"
-                    className="pl-10"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                  />
+                  <Input id="plan-name" required placeholder="e.g. Fiber Ultra" className="pl-10" value={name} onChange={e => setName(e.target.value)} />
                 </div>
               </div>
               
               <div>
-                <Label className="mb-1 block">Monthly Price</Label>
-                <div className="relative">
+                <Label htmlFor="price">Monthly Price</Label>
+                <div className="relative mt-1">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-gray-500 sm:text-sm">{currency === 'USD' ? '$' : currency}</span>
+                    <span className="text-gray-500 sm:text-sm">{currency}</span>
                   </div>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    required
-                    className="pl-12"
-                    placeholder="0.00"
-                    value={price}
-                    onChange={e => setPrice(e.target.value)}
-                  />
+                  <Input id="price" type="number" step="0.01" required className="pl-12" placeholder="0.00" value={price} onChange={e => setPrice(e.target.value)} />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <Grid cols={2} gap={6}>
                 <div>
-                  <Label className="mb-1 block">Download Speed</Label>
-                  <Input
-                    type="text"
-                    placeholder="100 Mbps"
-                    value={downloadSpeed}
-                    onChange={e => setDownloadSpeed(e.target.value)}
-                  />
+                  <Label htmlFor="download-speed">Download Speed</Label>
+                  <Input id="download-speed" placeholder="100 Mbps" value={downloadSpeed} onChange={e => setDownloadSpeed(e.target.value)} />
                 </div>
                 <div>
-                  <Label className="mb-1 block">Upload Speed</Label>
-                  <Input
-                    type="text"
-                    placeholder="20 Mbps"
-                    value={uploadSpeed}
-                    onChange={e => setUploadSpeed(e.target.value)}
-                  />
+                  <Label htmlFor="upload-speed">Upload Speed</Label>
+                  <Input id="upload-speed" placeholder="20 Mbps" value={uploadSpeed} onChange={e => setUploadSpeed(e.target.value)} />
                 </div>
-              </div>
+              </Grid>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 bg-gray-50 border-t border-gray-100 py-4 px-6">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  isLoading={isSubmitting}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Plan
-                </Button>
+            <CardFooter className="flex justify-end gap-3 bg-gray-50/50">
+                <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+                <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}><Save className="w-4 h-4 mr-2" />Save Plan</Button>
             </CardFooter>
           </form>
       </Card>

@@ -1,8 +1,9 @@
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, ElementType } from 'react';
 import { cn } from '../../utils/cn';
 
-export interface FlexProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface FlexProps extends React.HTMLAttributes<HTMLElement> {
+  as?: ElementType;
   direction?: 'row' | 'col' | 'row-reverse' | 'col-reverse';
   wrap?: 'nowrap' | 'wrap' | 'wrap-reverse';
   justify?: 'start' | 'end' | 'center' | 'between' | 'around' | 'evenly';
@@ -11,8 +12,9 @@ export interface FlexProps extends React.HTMLAttributes<HTMLDivElement> {
   inline?: boolean;
 }
 
-const Flex = forwardRef<HTMLDivElement, FlexProps>(({
+const Flex = forwardRef<HTMLElement, FlexProps>(({
   className,
+  as: Component = 'div',
   direction = 'row',
   wrap = 'nowrap',
   justify = 'start',
@@ -53,7 +55,7 @@ const Flex = forwardRef<HTMLDivElement, FlexProps>(({
   };
 
   return (
-    <div
+    <Component
       ref={ref}
       className={cn(
         inline ? 'inline-flex' : 'flex',
@@ -67,12 +69,13 @@ const Flex = forwardRef<HTMLDivElement, FlexProps>(({
       {...props}
     >
       {children}
-    </div>
+    </Component>
   );
 });
 Flex.displayName = "Flex";
 
-export interface FlexItemProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface FlexItemProps extends React.HTMLAttributes<HTMLElement> {
+  as?: ElementType;
   grow?: boolean | number;
   shrink?: boolean | number;
   basis?: string;
@@ -80,8 +83,9 @@ export interface FlexItemProps extends React.HTMLAttributes<HTMLDivElement> {
   alignSelf?: 'auto' | 'start' | 'end' | 'center' | 'stretch' | 'baseline';
 }
 
-const FlexItem = forwardRef<HTMLDivElement, FlexItemProps>(({
+const FlexItem = forwardRef<HTMLElement, FlexItemProps>(({
   className,
+  as: Component = 'div',
   grow,
   shrink,
   basis,
@@ -91,7 +95,7 @@ const FlexItem = forwardRef<HTMLDivElement, FlexItemProps>(({
   ...props
 }, ref) => {
   return (
-    <div
+    <Component
       ref={ref}
       className={cn(
         // Flex Grow
@@ -127,7 +131,7 @@ const FlexItem = forwardRef<HTMLDivElement, FlexItemProps>(({
       {...props}
     >
       {children}
-    </div>
+    </Component>
   );
 });
 FlexItem.displayName = "FlexItem";

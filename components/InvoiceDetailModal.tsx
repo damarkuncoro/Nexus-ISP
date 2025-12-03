@@ -3,9 +3,12 @@ import { Invoice, Customer, InvoiceStatus } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { Printer, Download, CheckCircle2 } from 'lucide-react';
 import { InvoiceStatusBadge } from './StatusBadges';
-import { Dialog, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Dialog, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import { Grid } from './ui/grid';
+import { Flex } from './ui/flex';
+import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell } from './ui/table';
 
 interface InvoiceDetailModalProps {
   invoice: Invoice;
@@ -34,7 +37,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice,
 
   return (
     <Dialog isOpen={true} onClose={onClose} className="max-w-2xl">
-        <DialogHeader className="flex flex-row justify-between items-center border-b border-gray-100 pb-4 mb-0">
+        <DialogHeader>
              <div>
                 <DialogTitle>Invoice Details</DialogTitle>
                 <p className="text-sm text-gray-500 mt-1">{invoice.invoice_number}</p>
@@ -42,28 +45,28 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice,
         </DialogHeader>
 
         <div className="py-6">
-            <div className="flex justify-between items-start mb-8">
+            <Flex justify="between" align="start" className="mb-8">
                <div>
                   <h1 className="text-2xl font-bold text-gray-900 mb-2">INVOICE</h1>
                   <InvoiceStatusBadge status={invoice.status} />
                </div>
                <div className="text-right space-y-1">
-                  <div className="flex justify-between gap-8 text-sm">
+                  <Flex justify="between" gap={8} className="text-sm">
                      <span className="text-gray-500">Issued Date:</span>
                      <span className="font-medium text-gray-900">{formatDate(invoice.issued_date)}</span>
-                  </div>
-                  <div className="flex justify-between gap-8 text-sm">
+                  </Flex>
+                  <Flex justify="between" gap={8} className="text-sm">
                      <span className="text-gray-500">Due Date:</span>
                      <span className={`font-medium ${invoice.status === InvoiceStatus.OVERDUE ? 'text-red-600' : 'text-gray-900'}`}>
                         {formatDate(invoice.due_date)}
                      </span>
-                  </div>
+                  </Flex>
                </div>
-            </div>
+            </Flex>
 
             <Separator className="my-6" />
 
-            <div className="grid grid-cols-2 gap-8 mb-8">
+            <Grid cols={2} gap={8} className="mb-8">
                <div>
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Bill To</h4>
                   <div className="text-sm text-gray-900 font-medium">{customer.name}</div>
@@ -78,43 +81,43 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice,
                   <div className="text-sm text-gray-600">Tech City, TC 90210</div>
                   <div className="text-sm text-gray-600 mt-1">billing@nexus-isp.com</div>
                </div>
-            </div>
+            </Grid>
 
             <div className="mb-6">
-               <table className="min-w-full">
-                  <thead>
-                     <tr className="border-b border-gray-200">
-                        <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Description</th>
-                        <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Amount</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                     <tr>
-                        <td className="py-4 text-sm text-gray-900">{invoice.description || 'Internet Services'}</td>
-                        <td className="py-4 text-right text-sm text-gray-900 font-mono">{formatCurrency(invoice.amount, currency)}</td>
-                     </tr>
-                  </tbody>
-                  <tfoot>
-                     <tr>
-                        <td className="pt-6 text-right text-sm font-medium text-gray-900">Total</td>
-                        <td className="pt-6 text-right text-2xl font-bold text-gray-900">{formatCurrency(invoice.amount, currency)}</td>
-                     </tr>
-                  </tfoot>
-               </table>
+               <Table>
+                  <TableHeader>
+                     <TableRow>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     <TableRow>
+                        <TableCell className="font-medium">{invoice.description || 'Internet Services'}</TableCell>
+                        <TableCell className="text-right font-mono">{formatCurrency(invoice.amount, currency)}</TableCell>
+                     </TableRow>
+                  </TableBody>
+                  <TableFooter>
+                     <TableRow>
+                        <TableCell className="text-right font-bold text-lg">Total</TableCell>
+                        <TableCell className="text-right font-bold text-2xl">{formatCurrency(invoice.amount, currency)}</TableCell>
+                     </TableRow>
+                  </TableFooter>
+               </Table>
             </div>
         </div>
 
-        <div className="flex flex-col-reverse sm:flex-row items-center justify-between pt-4 border-t border-gray-100 gap-4">
-             <div className="flex gap-2 w-full sm:w-auto">
+        <Flex direction="col-reverse" justify="between" align="center" className="sm:flex-row" gap={4}>
+             <Flex gap={2} className="w-full sm:w-auto">
                  <Button variant="outline" size="sm" onClick={() => window.print()}>
                     <Printer className="w-4 h-4 mr-2" /> Print
                  </Button>
                  <Button variant="outline" size="sm" onClick={() => onDownload(invoice)}>
                     <Download className="w-4 h-4 mr-2" /> Download
                  </Button>
-             </div>
+             </Flex>
              
-             <div className="flex gap-2 w-full sm:w-auto justify-end">
+             <Flex gap={2} justify="end" className="w-full sm:w-auto">
                 {invoice.status === InvoiceStatus.PENDING || invoice.status === InvoiceStatus.OVERDUE ? (
                    <>
                       <Button variant="destructive" size="sm" onClick={handleCancel}>
@@ -131,8 +134,8 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice,
                       <CheckCircle2 className="w-5 h-5 mr-2" /> Paid on {formatDate(invoice.issued_date)}
                    </span>
                 )}
-             </div>
-        </div>
+             </Flex>
+        </Flex>
     </Dialog>
   );
 };

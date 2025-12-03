@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Employee, EmployeeRole, EmployeeStatus } from '../types';
 import { Save, ArrowLeft } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
+import { Input } from './ui/input';
+import { Select } from './ui/select';
+import { Button } from './ui/button';
+import { Label } from './ui/label';
+import { Grid } from './ui/grid';
 
 interface EmployeeFormProps {
   onClose: () => void;
@@ -47,9 +53,6 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
         phone: phone || undefined,
         department: department || undefined,
       });
-      // onClose handled by parent
-    } catch (err) {
-      // Handled by parent
     } finally {
       setIsSubmitting(false);
     }
@@ -57,31 +60,28 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
 
   return (
     <div className="max-w-2xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6 flex items-center justify-between">
-         <button 
+      <div className="mb-6">
+         <Button 
+           variant="ghost"
            onClick={onClose} 
-           className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
          >
              <ArrowLeft className="w-5 h-5 mr-2" /> Back to Team
-         </button>
+         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-8 py-6 border-b border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900">
-                {initialData ? 'Edit Team Member' : 'Add Team Member'}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">Manage staff access and roles within the system.</p>
-          </div>
+      <Card>
+          <CardHeader>
+            <CardTitle>{initialData ? 'Edit Team Member' : 'Add Team Member'}</CardTitle>
+            <CardDescription>Manage staff access and roles within the system.</CardDescription>
+          </CardHeader>
             
           <form onSubmit={handleSubmit}>
-            <div className="p-8 space-y-6">
+            <CardContent className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input
-                  type="text"
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
                   required
-                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg border p-2.5"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. John Smith"
@@ -89,22 +89,22 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                <input
+                <Label htmlFor="email">Email Address</Label>
+                <Input
                   type="email"
+                  id="email"
                   required
-                  className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg border p-2.5"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="john@nexus-isp.com"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <Grid cols={2} gap={6}>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Role</label>
-                    <select
-                        className="mt-1 block w-full py-2.5 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    <Label htmlFor="role">Role</Label>
+                    <Select
+                        id="role"
                         value={role}
                         onChange={e => setRole(e.target.value as EmployeeRole)}
                     >
@@ -112,69 +112,53 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
                         <option value={EmployeeRole.TECHNICIAN}>Technician</option>
                         <option value={EmployeeRole.MANAGER}>Manager</option>
                         <option value={EmployeeRole.ADMIN}>Administrator</option>
-                    </select>
+                    </Select>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <select
-                        className="mt-1 block w-full py-2.5 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                        id="status"
                         value={status}
                         onChange={e => setStatus(e.target.value as EmployeeStatus)}
                     >
                         <option value={EmployeeStatus.ACTIVE}>Active</option>
                         <option value={EmployeeStatus.INACTIVE}>Inactive</option>
                         <option value={EmployeeStatus.ON_LEAVE}>On Leave</option>
-                    </select>
+                    </Select>
                 </div>
-              </div>
+              </Grid>
 
-              <div className="grid grid-cols-2 gap-6">
+              <Grid cols={2} gap={6}>
                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Department</label>
-                    <input
-                        type="text"
-                        className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg border p-2.5"
+                    <Label htmlFor="department">Department</Label>
+                    <Input
+                        id="department"
                         value={department}
                         onChange={e => setDepartment(e.target.value)}
                         placeholder="e.g. Field Ops"
                     />
                  </div>
                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <input
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                        id="phone"
                         type="tel"
-                        className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-lg border p-2.5"
                         value={phone}
                         onChange={e => setPhone(e.target.value)}
                         placeholder="(555) 123-4567"
                     />
                  </div>
-              </div>
-            </div>
+              </Grid>
+            </CardContent>
 
-            <div className="bg-gray-50 px-8 py-5 border-t border-gray-200 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2.5 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex justify-center rounded-lg border border-transparent shadow-sm px-6 py-2.5 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:text-sm disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Saving...' : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Member
-                    </>
-                  )}
-                </button>
-            </div>
+            <CardFooter className="flex justify-end gap-3 bg-gray-50/50">
+                <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+                <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
+                  <Save className="w-4 h-4 mr-2" /> Save Member
+                </Button>
+            </CardFooter>
           </form>
-      </div>
+      </Card>
     </div>
   );
 };

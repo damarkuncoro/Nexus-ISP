@@ -1,7 +1,11 @@
+
 import React from 'react';
 import { Employee, Ticket, TicketStatus } from '../types';
 import { ArrowLeft, Mail, Phone, Briefcase, Calendar, Edit2, Trash2, CheckCircle, Ticket as TicketIcon } from 'lucide-react';
 import { RoleBadge, EmployeeStatusBadge } from './StatusBadges';
+import { Flex } from './ui/flex';
+import { Grid, GridItem } from './ui/grid';
+import { Button } from './ui/button';
 
 interface EmployeeDetailProps {
   employee: Employee;
@@ -29,92 +33,85 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-       {/* Header */}
-       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-6">
-        <div className="flex items-center gap-4">
-          <button 
+       <Flex direction="col" justify="between" gap={4} className="sm:flex-row sm:items-center border-b border-gray-200 pb-6">
+        <Flex align="center" gap={4}>
+          <Button 
             onClick={onBack} 
-            className="p-2 hover:bg-white bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200 shadow-sm"
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-gray-100 hover:bg-white"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
+          </Button>
           
-          <div className="flex items-center gap-4">
+          <Flex align="center" gap={4}>
             <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-xl">
                 {employee.name.charAt(0)}
             </div>
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">{employee.name}</h1>
-                <div className="flex items-center gap-2 mt-1">
+                <Flex align="center" gap={2} className="mt-1">
                     <RoleBadge role={employee.role} />
                     <EmployeeStatusBadge status={employee.status} />
-                </div>
+                </Flex>
             </div>
-          </div>
-        </div>
+          </Flex>
+        </Flex>
         
-        <div className="flex gap-2 self-end sm:self-auto">
-           <button 
-             onClick={() => onEdit(employee)}
-             className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-           >
+        <Flex gap={2} className="self-end sm:self-auto">
+           <Button variant="outline" onClick={() => onEdit(employee)}>
              <Edit2 className="w-4 h-4 mr-2" />
              Edit Profile
-           </button>
-           <button 
-             onClick={() => onDelete(employee.id)}
-             className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-           >
+           </Button>
+           <Button variant="destructive" onClick={() => onDelete(employee.id)}>
              <Trash2 className="w-4 h-4 mr-2" />
              Delete
-           </button>
-        </div>
-      </div>
+           </Button>
+        </Flex>
+      </Flex>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Profile Card */}
-          <div className="md:col-span-1 space-y-6">
+      <Grid cols={1} className="md:grid-cols-3" gap={6}>
+          <GridItem className="md:col-span-1 space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
                       <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
                   </div>
                   <div className="p-6 space-y-4">
-                      <div className="flex items-start gap-3">
+                      <Flex align="start" gap={3}>
                           <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
                           <div>
                               <p className="text-xs text-gray-500 uppercase font-medium">Email</p>
                               <p className="text-sm text-gray-900">{employee.email}</p>
                           </div>
-                      </div>
-                      <div className="flex items-start gap-3">
+                      </Flex>
+                      <Flex align="start" gap={3}>
                           <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
                           <div>
                               <p className="text-xs text-gray-500 uppercase font-medium">Phone</p>
                               <p className="text-sm text-gray-900">{employee.phone || 'N/A'}</p>
                           </div>
-                      </div>
-                      <div className="flex items-start gap-3">
+                      </Flex>
+                      <Flex align="start" gap={3}>
                           <Briefcase className="w-5 h-5 text-gray-400 mt-0.5" />
                           <div>
                               <p className="text-xs text-gray-500 uppercase font-medium">Department</p>
                               <p className="text-sm text-gray-900">{employee.department || 'General'}</p>
                           </div>
-                      </div>
-                      <div className="flex items-start gap-3">
+                      </Flex>
+                      <Flex align="start" gap={3}>
                           <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
                           <div>
                               <p className="text-xs text-gray-500 uppercase font-medium">Joined</p>
                               <p className="text-sm text-gray-900">{new Date(employee.created_at).toLocaleDateString()}</p>
                           </div>
-                      </div>
+                      </Flex>
                   </div>
               </div>
 
-              {/* Stats Card */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="p-6">
                       <h3 className="text-sm font-medium text-gray-500 mb-4">Performance Overview</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      <Grid cols={2} gap={4}>
                           <div className="bg-blue-50 p-3 rounded-lg text-center">
                               <p className="text-2xl font-bold text-blue-700">{stats.active}</p>
                               <p className="text-xs text-blue-600 font-medium">Active Tasks</p>
@@ -123,33 +120,34 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({
                               <p className="text-2xl font-bold text-green-700">{stats.resolved}</p>
                               <p className="text-xs text-green-600 font-medium">Resolved</p>
                           </div>
-                      </div>
+                      </Grid>
                   </div>
               </div>
-          </div>
+          </GridItem>
 
-          {/* Assigned Work */}
-          <div className="md:col-span-2">
+          <GridItem className="md:col-span-2">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full">
-                  <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                      <div className="flex items-center gap-2">
+                  <Flex justify="between" align="center" className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                      <Flex align="center" gap={2}>
                         <TicketIcon className="w-5 h-5 text-gray-500" />
                         <h3 className="text-lg font-medium text-gray-900">Assigned Tickets</h3>
-                      </div>
+                      </Flex>
                       <span className="bg-gray-100 text-gray-600 text-xs px-2.5 py-0.5 rounded-full font-medium">
                           {stats.totalAssigned} Total
                       </span>
-                  </div>
+                  </Flex>
                   
                   {assignedTickets.length > 0 ? (
                       <div className="divide-y divide-gray-100">
                          {assignedTickets.map(ticket => (
-                             <div 
+                             <Flex 
                                 key={ticket.id} 
                                 onClick={() => onTicketClick(ticket)}
-                                className="p-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between group transition-colors"
+                                justify="between"
+                                align="center"
+                                className="p-4 hover:bg-gray-50 cursor-pointer group transition-colors"
                              >
-                                 <div className="flex items-center gap-3">
+                                 <Flex align="center" gap={3}>
                                      <div className={`p-2 rounded-full ${ticket.status === TicketStatus.CLOSED ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
                                          {ticket.status === TicketStatus.CLOSED ? <CheckCircle className="w-4 h-4" /> : <TicketIcon className="w-4 h-4" />}
                                      </div>
@@ -159,7 +157,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({
                                             #{String(ticket.id).slice(0,8)} • {ticket.customer?.name || 'Unknown Customer'}
                                          </p>
                                      </div>
-                                 </div>
+                                 </Flex>
                                  <div className="text-right">
                                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                                          ticket.status === TicketStatus.CLOSED ? 'bg-green-50 text-green-700' : 
@@ -170,7 +168,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({
                                      </span>
                                      <p className="text-xs text-gray-400 mt-1">{new Date(ticket.created_at).toLocaleDateString()}</p>
                                  </div>
-                             </div>
+                             </Flex>
                          ))}
                       </div>
                   ) : (
@@ -179,8 +177,8 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({
                       </div>
                   )}
               </div>
-          </div>
-      </div>
+          </GridItem>
+      </Grid>
     </div>
   );
 };

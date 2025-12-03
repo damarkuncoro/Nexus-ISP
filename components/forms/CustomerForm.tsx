@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Customer, CustomerStatus, SubscriptionPlan, CustomerType, InstallationStatus } from '../../types';
-import { Save, ArrowLeft, User, MapPin, Wifi, CheckCircle2 } from 'lucide-react';
+import { Save, ArrowLeft, User, MapPin, Wifi } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/card';
 import { Input } from '../ui/input';
@@ -92,15 +92,9 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
             <CardContent>
                 <Tabs defaultValue="identity" value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="grid w-full grid-cols-3 mb-6">
-                        <TabsTrigger value="identity">
-                            <User className="w-4 h-4 mr-2" /> 1. Identity
-                        </TabsTrigger>
-                        <TabsTrigger value="location">
-                            <MapPin className="w-4 h-4 mr-2" /> 2. Location
-                        </TabsTrigger>
-                        <TabsTrigger value="service">
-                            <Wifi className="w-4 h-4 mr-2" /> 3. Service
-                        </TabsTrigger>
+                        <TabsTrigger value="identity"><User className="w-4 h-4 mr-2" />1. Identity</TabsTrigger>
+                        <TabsTrigger value="location"><MapPin className="w-4 h-4 mr-2" />2. Location</TabsTrigger>
+                        <TabsTrigger value="service"><Wifi className="w-4 h-4 mr-2" />3. Service</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="identity" className="space-y-6">
@@ -112,71 +106,38 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
                                     <option value={CustomerType.CORPORATE}>Corporate (Business)</option>
                                 </Select>
                             </div>
-
                             <div>
                                 <Label htmlFor="name" className="mb-1 block">Full Name / PIC</Label>
                                 <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
                             </div>
-
-                            {type === CustomerType.CORPORATE && (
-                                <div>
-                                    <Label htmlFor="company" className="mb-1 block">Company Name</Label>
-                                    <Input required value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Acme Inc." />
-                                </div>
-                            )}
-
+                            {type === CustomerType.CORPORATE && (<div><Label htmlFor="company" className="mb-1 block">Company Name</Label><Input required value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Acme Inc." /></div>)}
                             <div>
                                 <Label htmlFor="identity" className="mb-1 block">{type === CustomerType.CORPORATE ? 'NPWP / SIUP' : 'KTP / ID Number'}</Label>
                                 <Input required value={identityNumber} onChange={(e) => setIdentityNumber(e.target.value)} placeholder="Identity Number" />
                             </div>
-
                             <div>
                                 <Label htmlFor="phone" className="mb-1 block">WhatsApp / Phone</Label>
                                 <Input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+62..." />
                             </div>
-
                             <div>
                                 <Label htmlFor="email" className="mb-1 block">Email Address</Label>
                                 <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" />
                             </div>
                         </div>
-                        <Flex justify="end">
-                            <Button type="button" onClick={handleNextTab}>Next Step</Button>
-                        </Flex>
+                        <Flex justify="end"><Button type="button" onClick={handleNextTab}>Next Step</Button></Flex>
                     </TabsContent>
 
                     <TabsContent value="location" className="space-y-6">
-                        <div>
-                            <Label htmlFor="address" className="mb-1 block">Full Installation Address</Label>
-                            <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, Number, RT/RW, District" />
-                        </div>
-                        <div>
-                            <Label htmlFor="coords" className="mb-1 block">Coordinates (Lat, Long)</Label>
-                            <Input value={coordinates} onChange={(e) => setCoordinates(e.target.value)} placeholder="-6.200000, 106.816666" />
-                            <p className="text-xs text-gray-500 mt-1">Required for Fiber Feasibility Survey.</p>
-                        </div>
-                        <Flex justify="end">
-                            <Button type="button" onClick={handleNextTab}>Next Step</Button>
-                        </Flex>
+                        <div><Label htmlFor="address" className="mb-1 block">Full Installation Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, Number, RT/RW, District" /></div>
+                        <div><Label htmlFor="coords" className="mb-1 block">Coordinates (Lat, Long)</Label><Input value={coordinates} onChange={(e) => setCoordinates(e.target.value)} placeholder="-6.200000, 106.816666" /><p className="text-xs text-gray-500 mt-1">Required for Fiber Feasibility Survey.</p></div>
+                        <Flex justify="end"><Button type="button" onClick={handleNextTab}>Next Step</Button></Flex>
                     </TabsContent>
 
                     <TabsContent value="service" className="space-y-6">
                         <div>
                             <Label htmlFor="plan" className="mb-1 block">Desired Service Plan</Label>
-                            {hasPlans ? (
-                                <Select value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)}>
-                                <option value="">-- Select Plan --</option>
-                                {plans.map(plan => (
-                                    <option key={plan.id} value={plan.id}>
-                                    {plan.name} ({formatCurrency(plan.price, currency)})
-                                    </option>
-                                ))}
-                                </Select>
-                            ) : (
-                                <Input disabled placeholder="No plans defined" />
-                            )}
+                            {hasPlans ? (<Select value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)}><option value="">-- Select Plan --</option>{plans.map(plan => (<option key={plan.id} value={plan.id}>{plan.name} ({formatCurrency(plan.price, currency)})</option>))}</Select>) : (<Input disabled placeholder="No plans defined" />)}
                         </div>
-
                         <div>
                             <Label htmlFor="status" className="mb-1 block">Initial Status</Label>
                             <Select value={accountStatus} onChange={(e) => setAccountStatus(e.target.value as CustomerStatus)}>
@@ -185,13 +146,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
                                 <option value={CustomerStatus.ACTIVE}>Active (Skip Survey)</option>
                             </Select>
                         </div>
-
-                        <Flex justify="end" className="pt-4">
-                            <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting} className="bg-green-600 hover:bg-green-700">
-                                <Save className="w-4 h-4 mr-2" />
-                                Create Registration
-                            </Button>
-                        </Flex>
+                        <Flex justify="end" className="pt-4"><Button type="submit" disabled={isSubmitting} isLoading={isSubmitting} className="bg-green-600 hover:bg-green-700"><Save className="w-4 h-4 mr-2" />Create Registration</Button></Flex>
                     </TabsContent>
                 </Tabs>
             </CardContent>
