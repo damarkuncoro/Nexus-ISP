@@ -10,6 +10,7 @@ export const APP_NAME = "Cakramedia ISP Manager";
 
 export const SETUP_SQL = `-- 0. Reset Schema (DROP ALL TABLES)
 -- WARNING: This will delete all existing data!
+DROP TABLE IF EXISTS public.audit_logs CASCADE;
 DROP TABLE IF EXISTS public.ticket_comments CASCADE;
 DROP TABLE IF EXISTS public.payment_methods CASCADE;
 DROP TABLE IF EXISTS public.invoices CASCADE;
@@ -147,7 +148,10 @@ create table public.network_devices (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   model text,
   serial_number text,
-  firmware_version text
+  firmware_version text,
+  mac_address text,
+  vlan_id text,
+  pppoe_username text
 );
 
 -- 10. Create Employees Table (ISP Enhanced)
@@ -175,15 +179,27 @@ create table public.system_settings (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 12. Create Indexes (Optimization)
+-- 12. Create Audit Logs Table
+create table public.audit_logs (
+  id uuid default gen_random_uuid() primary key,
+  action text not null,
+  entity text not null,
+  entity_id text,
+  details text,
+  performed_by text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 13. Create Indexes (Optimization)
 create index tickets_customer_id_idx on public.tickets(customer_id);
 create index customers_plan_id_idx on public.customers(plan_id);
 create index invoices_customer_id_idx on public.invoices(customer_id);
 create index payment_methods_customer_id_idx on public.payment_methods(customer_id);
 create index ticket_comments_ticket_id_idx on public.ticket_comments(ticket_id);
 create index network_devices_customer_id_idx on public.network_devices(customer_id);
+create index audit_logs_created_at_idx on public.audit_logs(created_at);
 
--- 13. Enable Row Level Security (RLS)
+-- 14. Enable Row Level Security (RLS)
 alter table public.customers enable row level security;
 alter table public.tickets enable row level security;
 alter table public.plans enable row level security;
@@ -195,8 +211,9 @@ alter table public.employees enable row level security;
 alter table public.ticket_categories enable row level security;
 alter table public.system_settings enable row level security;
 alter table public.departments enable row level security;
+alter table public.audit_logs enable row level security;
 
--- 14. Create Public Access Policies (for demo)
+-- 15. Create Public Access Policies (for demo)
 create policy "Public Access Customers" on public.customers for all using (true);
 create policy "Public Access Tickets" on public.tickets for all using (true);
 create policy "Public Access Plans" on public.plans for all using (true);
@@ -208,8 +225,9 @@ create policy "Public Access Employees" on public.employees for all using (true)
 create policy "Public Access Categories" on public.ticket_categories for all using (true);
 create policy "Public Access Settings" on public.system_settings for all using (true);
 create policy "Public Access Departments" on public.departments for all using (true);
+create policy "Public Access Audit" on public.audit_logs for all using (true);
 
--- 15. Seed Default Data
+-- 16. Seed Default Data
 insert into public.plans (name, price, download_speed, upload_speed) values 
 ('Home Fiber Starter', 29.99, '50 Mbps', '10 Mbps'),
 ('Home Fiber Plus', 49.99, '100 Mbps', '50 Mbps'),
@@ -233,4 +251,7 @@ insert into public.departments (name, description, location, manager_name) value
 ('Network Engineering', 'Core network infrastructure management', 'HQ - Server Room', 'Alex Net');
 
 insert into public.system_settings (key, value, description) values
-('currency', 'USD', 'Default currency code for the application')`;
+('currency', 'USD', 'Default currency code for the application');
+
+insert into public.audit_logs (action, entity, details, performed_by) values
+('system', 'System', 'System initialized with default data', 'System')`;

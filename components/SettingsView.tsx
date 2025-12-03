@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { Copy, Check, Database, Server, ShieldCheck, Download, Globe, Loader2, Tag, Building2 } from 'lucide-react';
+import { Copy, Check, Database, Server, ShieldCheck, Download, Globe, Loader2, Tag, Building2, FileText } from 'lucide-react';
 import { SETUP_SQL, SUPABASE_URL } from '../constants';
 import { AVAILABLE_CURRENCIES } from '../utils/formatters';
 import { CategorySettings } from './settings/CategorySettings';
 import { DepartmentSettings } from './settings/DepartmentSettings';
+import { AuditLogViewer } from './settings/AuditLogViewer';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
@@ -54,6 +55,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ connectionStatus, cu
             <TabsTrigger value="general"><Globe className="w-4 h-4 mr-2" />General</TabsTrigger>
             <TabsTrigger value="categories"><Tag className="w-4 h-4 mr-2" />Categories</TabsTrigger>
             <TabsTrigger value="departments"><Building2 className="w-4 h-4 mr-2" />Departments</TabsTrigger>
+            {hasPermission('manage_settings') && <TabsTrigger value="audit"><FileText className="w-4 h-4 mr-2" />Audit Logs</TabsTrigger>}
             <TabsTrigger value="database"><Database className="w-4 h-4 mr-2" />Database</TabsTrigger>
         </TabsList>
 
@@ -92,6 +94,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ connectionStatus, cu
         <TabsContent value="departments">
             <DepartmentSettings />
         </TabsContent>
+
+        {hasPermission('manage_settings') && (
+            <TabsContent value="audit">
+                <AuditLogViewer />
+            </TabsContent>
+        )}
 
         <TabsContent value="database">
             <Grid cols={1} className="lg:grid-cols-2" gap={6}>

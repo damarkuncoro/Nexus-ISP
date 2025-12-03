@@ -212,6 +212,10 @@ export interface NetworkDevice {
   model?: string;
   serial_number?: string;
   firmware_version?: string;
+  // New ISP Technical Fields
+  mac_address?: string;
+  vlan_id?: string;
+  pppoe_username?: string;
 }
 
 export interface Alert {
@@ -229,4 +233,22 @@ export type TicketStats = {
   inProgress: number;
   closed: number;
   highPriority: number;
+}
+
+export enum AuditAction {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LOGIN = 'login',
+  SYSTEM = 'system'
+}
+
+export interface AuditLog {
+  id: string;
+  action: AuditAction;
+  entity: string; // e.g. 'Ticket', 'Customer', 'Device'
+  entity_id?: string;
+  details?: string;
+  performed_by: string; // User Name or Email
+  created_at: string;
 }
