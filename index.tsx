@@ -1,6 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
+import './index.css';
 import { App } from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -16,10 +17,9 @@ interface ErrorBoundaryState {
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = { hasError: false, error: null };
-
   constructor(props: ErrorBoundaryProps) {
     super(props);
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -40,9 +40,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             <div className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-auto text-sm font-mono mb-4">
               {this.state.error?.toString()}
             </div>
-            <button 
+            <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors bg-blue-600"
+              className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
             >
               Reload Application
             </button>

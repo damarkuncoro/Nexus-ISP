@@ -198,9 +198,213 @@ export const App: React.FC = () => {
       };
       return titles[view] || 'Nexus ISP Manager';
   };
+const renderContent = () => {
+  if (view === 'settings' && !hasPermission('manage_settings')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin" />;
+  if ((view === 'employees' || view === 'employee-form') && !hasPermission('manage_team')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin or Manager" />;
 
-  const renderContent = () => {
-    if (view === 'settings' && !hasPermission('manage_settings')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin" />;
-    if ((view === 'employees' || view === 'employee-form') && !hasPermission('manage_team')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin or Manager" />;
+  if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  if (setupError) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full border border-red-100">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">Database Setup Required</h1>
+        <p className="text-gray-600 mb-4">The application database needs to be initialized. Please run the setup SQL in your Supabase dashboard.</p>
+        <div className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-auto text-sm font-mono mb-4 max-h-64">
+          {SETUP_SQL}
+        </div>
+        <button
+          onClick={handleCopySQL}
+          className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors mr-2"
+        >
+          {copied ? 'Copied!' : 'Copy SQL'}
+        </button>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+        >
+          Reload After Setup
+        </button>
+      </div>
+    </div>
+  );
 
+  switch (view) {
+    case 'dashboard':
+      return <DashboardView
+        tickets={tickets}
+        customers={customers}
+        plans={plans}
+        devices={devices}
+        employees={employees}
+        onCustomerClick={handleCustomerClick}
+        onPlanClick={handlePlanClick}
+        onTicketClick={handleTicketClick}
+        onCreateTicket={openCreateTicket}
+        onCreateCustomer={openCreateCustomer}
+        onCreatePlan={openCreatePlan}
+        onCreateDevice={openCreateDevice}
+        onCreateEmployee={openCreateEmployee}
+        onViewChange={handleViewChange}
+      />;
+    case 'tickets':
+      return selectedTicket ? (
+        <TicketDetail
+          ticket={selectedTicket}
+          customers={customers}
+          onBack={() => setSelectedTicket(null)}
+          onEdit={openEditTicket}
+          onUpdate={handleQuickUpdateTicket}
+          onDelete={handleDeleteTicket}
+        />
+      ) : (
+        <TicketList
+          tickets={tickets}
+          customers={customers}
+          onTicketClick={handleTicketClick}
+          onCreateTicket={openCreateTicket}
+          onUpdateTicket={handleQuickUpdateTicket}
+          onDeleteTicket={handleDeleteTicket}
+        />
+      );
+    case 'ticket-form':
+      return <TicketForm
+        ticket={editingTicket}
+        customers={customers}
+        categories={categories}
+        onSubmit={editingTicket?.id ? handleUpdateTicket : handleCreateTicket}
+        onCancel={() => setView('tickets')}
+      />;
+    case 'customers':
+      return selectedCustomer ? (
+        <CustomerDetail
+          customer={selectedCustomer}
+          plans={plans}
+          devices={devices}
+          tickets={tickets}
+          onBack={() => setSelectedCustomer(null)}
+          onEdit={() => setView('customer-form')}
+          onUpdate={handleUpdateCustomer}
+          onDelete={handleDeleteCustomer}
+          onCreateTicket={openCreateTicket}
+          onDeviceForm={openCustomerDeviceForm}
+        />
+      ) : (
+        <CustomerList
+          customers={customers}
+          search={customerSearch}
+          onSearchChange={setCustomerSearch}
+          onCustomerClick={handleCustomerClick}
+          onCreateCustomer={openCreateCustomer}
+        />
+      );
+    case 'customer-form':
+      return <CustomerForm
+        customer={selectedCustomer}
+        plans={plans}
+        onSubmit={selectedCustomer ? (data) => handleUpdateCustomer(selectedCustomer.id, data) : handleCreateCustomer}
+        onCancel={() => setView('customers')}
+      />;
+    case 'plans':
+      return selectedPlan ? (
+        <PlanDetail
+          plan={selectedPlan}
+          customers={customers}
+          onBack={() => setSelectedPlan(null)}
+          onEdit={openEditPlan}
+          onDelete={handleDeletePlan}
+        />
+      ) : (
+        <PlansView
+          plans={plans}
+          onPlanClick={handlePlanClick}
+          onCreatePlan={openCreatePlan}
+        />
+      );
+    case 'plan-form':
+      return <PlanForm
+        plan={editingPlan}
+        onSubmit={handleCreatePlan}
+        onCancel={() => setView('plans')}
+      />;
+    case 'network':
+      return <NetworkView
+        devices={devices}
+        customers={customers}
+        onCreateDevice={openCreateDevice}
+        onEditDevice={openEditDevice}
+        onDeleteDevice={handleDeleteDevice}
+      />;
+    case 'device-form':
+      return <DeviceForm
+        device={editingDevice}
+        customers={customers}
+        customerId={deviceCustomerId}
+        onSubmit={editingDevice ? handleUpdateDevice : handleCreateDevice}
+        onCancel={() => setView(deviceCustomerId ? 'customers' : 'network')}
+      />;
+    case 'employees':
+      return selectedEmployee ? (
+        <EmployeeDetail
+          employee={selectedEmployee}
+          onBack={() => setSelectedEmployee(null)}
+          onEdit={openEditEmployee}
+          onDelete={handleDeleteEmployee}
+        />
+      ) : (
+        <EmployeeList
+          employees={employees}
+          departments={departments}
+          onEmployeeClick={(emp) => setSelectedEmployee(emp)}
+          onCreateEmployee={openCreateEmployee}
+        />
+      );
+    case 'employee-form':
+      return <EmployeeForm
+        employee={editingEmployee}
+        departments={departments}
+        onSubmit={editingEmployee ? handleUpdateEmployee : handleCreateEmployee}
+        onCancel={() => setView('employees')}
+      />;
+    case 'settings':
+      return <SettingsView
+        currency={currency}
+        onSaveCurrency={saveCurrency}
+        onCopySQL={handleCopySQL}
+        copied={copied}
+      />;
+    case 'alerts':
+      return <AlertsView
+        onCreateTicket={openCreateTicketFromAlert}
+      />;
+    default:
+      return <DashboardView
+        tickets={tickets}
+        customers={customers}
+        plans={plans}
+        devices={devices}
+        employees={employees}
+        onCustomerClick={handleCustomerClick}
+        onPlanClick={handlePlanClick}
+        onTicketClick={handleTicketClick}
+        onCreateTicket={openCreateTicket}
+        onCreateCustomer={openCreateCustomer}
+        onCreatePlan={openCreatePlan}
+        onCreateDevice={openCreateDevice}
+        onCreateEmployee={openCreateEmployee}
+        onViewChange={handleViewChange}
+      />;
+  }
+};
+
+return (
+  <Layout
+    view={view}
+    activeNav={getActiveNav()}
+    pageTitle={getPageTitle()}
+    onViewChange={handleViewChange}
+    hasPermission={hasPermission}
+  >
+    {renderContent()}
+  </Layout>
+);
+};
     
