@@ -356,7 +356,7 @@ const renderContent = () => {
         <EmployeeList
           employees={employees}
           departments={departments}
-          onEmployeeClick={(emp) => setSelectedEmployee(emp)}
+          onSelect={(emp) => setSelectedEmployee(emp)}
           onCreateEmployee={openCreateEmployee}
         />
       );
