@@ -24,13 +24,14 @@ interface TicketListProps {
 }
 
 export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelete, onCustomerClick, onTicketClick, onCreateTicket, onUpdateTicket, onDeleteTicket, customers, compact = false }) => {
+  const safeTickets = Array.isArray(tickets) ? tickets : [];
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | 'all'>('all');
 
   const filteredTickets = useMemo(() => {
-    return tickets.filter(ticket => {
+    return safeTickets.filter(ticket => {
       const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             ticket.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             ticket.customer?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,7 +42,7 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelet
       
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  }, [tickets, searchTerm, statusFilter, priorityFilter]);
+  }, [safeTickets, searchTerm, statusFilter, priorityFilter]);
 
   const TicketCardContent = ({ ticket }: { ticket: Ticket }) => {
       const isOverdue = ticket.due_date && new Date(ticket.due_date) < new Date() && ticket.status !== TicketStatus.CLOSED;
@@ -103,7 +104,7 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelet
       );
   };
 
-  if (tickets.length === 0 && !compact) {
+  if (safeTickets.length === 0 && !compact) {
     return (
         <EmptyState 
             icon={Filter}
