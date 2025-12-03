@@ -4,6 +4,7 @@ import { Activity, Send } from 'lucide-react';
 import { Card, CardHeader, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
+import { Flex } from './ui/flex';
 
 interface TicketCommentsProps {
   ticketId: string;
@@ -48,28 +49,28 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
                </div>
             ) : (
                comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-4 group">
+                  <Flex key={comment.id} gap={4} align="start" className="group">
                      <div className="flex-shrink-0">
                         <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
                            {comment.author_name.charAt(0)}
                         </div>
                      </div>
                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
+                        <Flex align="center" justify="between">
                            <h4 className="text-sm font-bold text-gray-900">{comment.author_name}</h4>
                            <span className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleString()}</span>
-                        </div>
+                        </Flex>
                         <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg rounded-tl-none">
                            {comment.content}
                         </div>
                      </div>
-                  </div>
+                  </Flex>
                ))
             )}
          </div>
 
          {/* New Comment Form */}
-         <form onSubmit={handleSubmit} className="mt-6 flex gap-3 items-start">
+         <Flex as="form" onSubmit={handleSubmit} gap={3} align="start" className="mt-6">
             <div className="flex-shrink-0">
                 <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-bold">
                    A
@@ -84,7 +85,7 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
                   onChange={(e) => setNewComment(e.target.value)}
                   disabled={isSubmitting}
                />
-               <div className="flex justify-end">
+               <Flex justify="end">
                   <Button
                      type="submit"
                      size="sm"
@@ -94,9 +95,9 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
                      <Send className="w-3 h-3 mr-1.5" />
                      Post Update
                   </Button>
-               </div>
+               </Flex>
             </div>
-         </form>
+         </Flex>
       </CardContent>
    </Card>
   );

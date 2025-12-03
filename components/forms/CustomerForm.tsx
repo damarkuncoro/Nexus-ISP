@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { Flex } from '../ui/flex';
+import { Grid, GridItem } from '../ui/grid';
 
 interface CustomerFormProps {
   onClose: () => void;
@@ -98,14 +99,14 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
                     </TabsList>
 
                     <TabsContent value="identity" className="space-y-6">
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="col-span-2">
+                        <Grid cols={2} gap={6}>
+                            <GridItem colSpan={2}>
                                 <Label htmlFor="type" className="mb-1 block">Customer Type</Label>
                                 <Select value={type} onChange={(e) => setType(e.target.value as CustomerType)}>
                                     <option value={CustomerType.RESIDENTIAL}>Residential (Personal)</option>
                                     <option value={CustomerType.CORPORATE}>Corporate (Business)</option>
                                 </Select>
-                            </div>
+                            </GridItem>
                             <div>
                                 <Label htmlFor="name" className="mb-1 block">Full Name / PIC</Label>
                                 <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
@@ -123,7 +124,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
                                 <Label htmlFor="email" className="mb-1 block">Email Address</Label>
                                 <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" />
                             </div>
-                        </div>
+                        </Grid>
                         <Flex justify="end"><Button type="button" onClick={handleNextTab}>Next Step</Button></Flex>
                     </TabsContent>
 

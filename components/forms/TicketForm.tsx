@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Ticket, TicketStatus, TicketPriority, Customer, Employee, TicketCategoryConfig } from '../../types';
 import { Save, FileText, Tag, ArrowLeft, CheckCircle, Microscope, Clock } from 'lucide-react';

@@ -1,11 +1,13 @@
 
 import React from 'react';
 import { Employee, Ticket, TicketStatus } from '../types';
-import { ArrowLeft, Mail, Phone, Briefcase, Calendar, Edit2, Trash2, CheckCircle, Ticket as TicketIcon } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Briefcase, Calendar, Edit2, Trash2, CheckCircle, Ticket as TicketIcon, Fingerprint, Home, Award } from 'lucide-react';
 import { RoleBadge, EmployeeStatusBadge } from './StatusBadges';
 import { Flex } from './ui/flex';
 import { Grid, GridItem } from './ui/grid';
 import { Button } from './ui/button';
+import { useAuth } from '../contexts/AuthContext';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 
 interface EmployeeDetailProps {
   employee: Employee;
@@ -16,6 +18,16 @@ interface EmployeeDetailProps {
   onTicketClick: (ticket: Ticket) => void;
 }
 
+const DetailItem = ({ icon: Icon, label, value }: { icon: any, label: string, value?: string }) => (
+    <Flex align="start" gap={3}>
+        <Icon className="w-5 h-5 text-gray-400 mt-0.5" />
+        <div>
+            <p className="text-xs text-gray-500 uppercase font-medium">{label}</p>
+            <p className="text-sm text-gray-900">{value || 'N/A'}</p>
+        </div>
+    </Flex>
+);
+
 export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({ 
   employee, 
   assignedTickets, 
@@ -24,7 +36,7 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({
   onDelete,
   onTicketClick
 }) => {
-  
+  const { hasPermission } = useAuth();
   const stats = {
       totalAssigned: assignedTickets.length,
       active: assignedTickets.filter(t => t.status !== TicketStatus.CLOSED).length,
@@ -58,53 +70,51 @@ export const EmployeeDetail: React.FC<EmployeeDetailProps> = ({
           </Flex>
         </Flex>
         
-        <Flex gap={2} className="self-end sm:self-auto">
-           <Button variant="outline" onClick={() => onEdit(employee)}>
-             <Edit2 className="w-4 h-4 mr-2" />
-             Edit Profile
-           </Button>
-           <Button variant="destructive" onClick={() => onDelete(employee.id)}>
-             <Trash2 className="w-4 h-4 mr-2" />
-             Delete
-           </Button>
-        </Flex>
+        {hasPermission('manage_team') && (
+          <Flex gap={2} className="self-end sm:self-auto">
+            <Button variant="outline" onClick={() => onEdit(employee)}>
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Button>
+            
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Team Member?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently remove {employee.name} from the system. Historic ticket associations may be preserved but the user account will be gone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(employee.id)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+          </Flex>
+        )}
       </Flex>
 
       <Grid cols={1} className="md:grid-cols-3" gap={6}>
           <GridItem className="md:col-span-1 space-y-6">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                      <h3 className="text-lg font-medium text-gray-900">Contact Information</h3>
+                      <h3 className="text-lg font-medium text-gray-900">Employee Profile</h3>
                   </div>
                   <div className="p-6 space-y-4">
-                      <Flex align="start" gap={3}>
-                          <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
-                          <div>
-                              <p className="text-xs text-gray-500 uppercase font-medium">Email</p>
-                              <p className="text-sm text-gray-900">{employee.email}</p>
-                          </div>
-                      </Flex>
-                      <Flex align="start" gap={3}>
-                          <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                          <div>
-                              <p className="text-xs text-gray-500 uppercase font-medium">Phone</p>
-                              <p className="text-sm text-gray-900">{employee.phone || 'N/A'}</p>
-                          </div>
-                      </Flex>
-                      <Flex align="start" gap={3}>
-                          <Briefcase className="w-5 h-5 text-gray-400 mt-0.5" />
-                          <div>
-                              <p className="text-xs text-gray-500 uppercase font-medium">Department</p>
-                              <p className="text-sm text-gray-900">{employee.department || 'General'}</p>
-                          </div>
-                      </Flex>
-                      <Flex align="start" gap={3}>
-                          <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
-                          <div>
-                              <p className="text-xs text-gray-500 uppercase font-medium">Joined</p>
-                              <p className="text-sm text-gray-900">{new Date(employee.created_at).toLocaleDateString()}</p>
-                          </div>
-                      </Flex>
+                      <DetailItem icon={Mail} label="Email" value={employee.email} />
+                      <DetailItem icon={Phone} label="Phone" value={employee.phone} />
+                      <DetailItem icon={Briefcase} label="Department" value={employee.department} />
+                      <DetailItem icon={Calendar} label="Hire Date" value={employee.hire_date ? new Date(employee.hire_date).toLocaleDateString() : 'N/A'} />
+                      <DetailItem icon={Fingerprint} label="Identity Number" value={employee.identity_number} />
+                      <DetailItem icon={Home} label="Address" value={employee.address} />
+                      <DetailItem icon={Award} label="Certifications" value={employee.certifications} />
                   </div>
               </div>
 

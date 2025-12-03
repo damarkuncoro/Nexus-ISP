@@ -3,6 +3,8 @@ import React, { ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
+import { Toaster } from './components/ui/sonner';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -13,7 +15,6 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Simple Error Boundary Component to catch runtime errors
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { hasError: false, error: null };
 
@@ -64,7 +65,10 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <AuthProvider>
-        <App />
+        <ToastProvider>
+          <App />
+          <Toaster />
+        </ToastProvider>
       </AuthProvider>
     </ErrorBoundary>
   </React.StrictMode>

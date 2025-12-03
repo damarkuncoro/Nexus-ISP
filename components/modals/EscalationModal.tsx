@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Ticket, Employee } from '../types';
+import { Ticket, Employee } from '../../types';
 import { ShieldAlert } from 'lucide-react';
-import { Dialog, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from './ui/dialog';
-import { Button } from './ui/button';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { Select } from './ui/select';
-import { Alert } from './ui/alert';
+import { Dialog, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Select } from '../ui/select';
+import { Alert } from '../ui/alert';
 
 interface EscalationModalProps {
   isOpen: boolean;

@@ -32,6 +32,15 @@ export interface TicketCategoryConfig {
   created_at?: string;
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  description?: string;
+  location?: string; // e.g., "HQ - Floor 2"
+  manager_name?: string;
+  created_at?: string;
+}
+
 export enum CustomerStatus {
   LEAD = 'lead', // New: Prospective customer
   ACTIVE = 'active',
@@ -134,6 +143,11 @@ export interface Employee {
   phone?: string;
   department?: string;
   avatar_url?: string;
+  // ISP Specific Enhancements
+  identity_number?: string; // KTP
+  address?: string;
+  hire_date?: string; // ISO Date String
+  certifications?: string; // Comma-separated list
   created_at: string;
 }
 

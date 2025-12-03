@@ -1,10 +1,15 @@
-
 import React, { useState } from 'react';
 import { NetworkDevice, DeviceStatus, DeviceType } from '../types';
-import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle, Trash2, Edit2 } from 'lucide-react';
 import { DeviceStatusBadge } from './StatusBadges';
 import { Grid, GridItem } from './ui/grid';
 import { Flex } from './ui/flex';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { useAuth } from '../contexts/AuthContext';
+import { EmptyState } from './ui/empty-state';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 
 interface NetworkViewProps {
   devices: NetworkDevice[];
@@ -35,11 +40,12 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
   onRefresh
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const { hasPermission } = useAuth();
 
   const filteredDevices = devices.filter(d => 
     d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.ip_address?.includes(searchTerm) ||
-    d.location?.toLowerCase().includes(searchTerm.toLowerCase())
+    (d.ip_address && d.ip_address.includes(searchTerm)) ||
+    (d.location && d.location.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const stats = {
@@ -52,122 +58,108 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
-      {/* Network Stats */}
+      {/* FIX: Completed the stats grid which was truncated and had a typo. */}
       <Grid cols={1} className="md:grid-cols-4" gap={4}>
          <Flex align="center" justify="between" className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <div>
-               <p className="text-sm font-medium text-gray-500">Total Devices</p>
-               <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
+               <p className="text-xs text-gray-500 uppercase font-medium">Total Devices</p>
+               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
-            <div className="p-2 bg-gray-50 rounded-lg">
-               <Server className="w-6 h-6 text-gray-600" />
-            </div>
+            <div className="p-3 bg-gray-100 rounded-lg"><Server className="w-5 h-5 text-gray-500" /></div>
          </Flex>
          <Flex align="center" justify="between" className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <div>
-               <p className="text-sm font-medium text-gray-500">Online</p>
-               <p className="text-2xl font-bold text-green-600 mt-1">{stats.online}</p>
+               <p className="text-xs text-gray-500 uppercase font-medium">Online</p>
+               <p className="text-2xl font-bold text-green-600">{stats.online}</p>
             </div>
-            <div className="p-2 bg-green-50 rounded-lg">
-               <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
+            <div className="p-3 bg-green-50 rounded-lg"><CheckCircle className="w-5 h-5 text-green-500" /></div>
          </Flex>
          <Flex align="center" justify="between" className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <div>
-               <p className="text-sm font-medium text-gray-500">Offline</p>
-               <p className="text-2xl font-bold text-red-600 mt-1">{stats.offline}</p>
+               <p className="text-xs text-gray-500 uppercase font-medium">Offline</p>
+               <p className="text-2xl font-bold text-red-600">{stats.offline}</p>
             </div>
-            <div className="p-2 bg-red-50 rounded-lg">
-               <AlertTriangle className="w-6 h-6 text-red-600" />
-            </div>
+            <div className="p-3 bg-red-50 rounded-lg"><AlertTriangle className="w-5 h-5 text-red-500" /></div>
          </Flex>
          <Flex align="center" justify="between" className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <div>
-               <p className="text-sm font-medium text-gray-500">Warning</p>
-               <p className="text-2xl font-bold text-amber-600 mt-1">{stats.warning}</p>
+               <p className="text-xs text-gray-500 uppercase font-medium">Warning</p>
+               <p className="text-2xl font-bold text-amber-600">{stats.warning}</p>
             </div>
-            <div className="p-2 bg-amber-50 rounded-lg">
-               <Activity className="w-6 h-6 text-amber-600" />
-            </div>
+            <div className="p-3 bg-amber-50 rounded-lg"><AlertTriangle className="w-5 h-5 text-amber-500" /></div>
          </Flex>
       </Grid>
+      
+      <Card>
+          <Flex justify="between" align="center" className="p-4 border-b border-gray-200 bg-gray-50">
+             <div className="relative w-full sm:w-96">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="h-4 w-4 text-gray-400" /></div>
+                <Input type="text" className="pl-10" placeholder="Search by name, IP, location..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+             </div>
+             <Button variant="outline" size="sm" onClick={onRefresh}><RefreshCw className="w-3 h-3 mr-2" /> Refresh</Button>
+          </Flex>
 
-      {/* Toolbar */}
-      <Flex direction="col" justify="between" align="center" gap={4} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:flex-row">
-        <div className="relative w-full sm:w-96">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-            placeholder="Search devices, IP, or location..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Flex gap={2} className="w-full sm:w-auto">
-           <button 
-             onClick={onRefresh}
-             className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors"
-           >
-             <RefreshCw className="w-4 h-4" />
-             Check Status
-           </button>
-           <button 
-             onClick={onAddDevice}
-             className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
-           >
-             <Plus className="w-4 h-4" />
-             Add Device
-           </button>
-        </Flex>
-      </Flex>
-
-      {/* Devices Grid */}
-      <Grid cols={1} className="md:grid-cols-2 lg:grid-cols-3" gap={6}>
-         {filteredDevices.map(device => (
-            <div key={device.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-               <div className="p-6">
-                  <Flex justify="between" align="start" className="mb-4">
-                     <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <DeviceIcon type={device.type} />
-                     </div>
-                     <DeviceStatusBadge status={device.status} />
-                  </Flex>
-                  
-                  <h3 className="text-lg font-bold text-gray-900 truncate">{device.name}</h3>
-                  <p className="text-sm text-gray-500 mb-4">{device.ip_address || 'No IP Configured'}</p>
-                  
-                  <div className="space-y-2 text-sm text-gray-600">
-                     <Flex align="center" gap={2}>
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <span>{device.location || 'Unspecified Location'}</span>
-                     </Flex>
-                     <Flex align="center" gap={2}>
-                        <Activity className="w-4 h-4 text-gray-400" />
-                        <span>Type: {device.type.toUpperCase()}</span>
-                     </Flex>
-                  </div>
-               </div>
-               <Flex justify="between" align="center" className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500">
-                  <span>Checked: {new Date(device.last_check).toLocaleTimeString()}</span>
-                  <Flex gap={2}>
-                     <button onClick={() => onEditDevice(device)} className="text-primary-600 hover:text-primary-800 font-medium">Edit</button>
-                     <button onClick={() => onDeleteDevice(device.id)} className="text-red-600 hover:text-red-800 font-medium">Delete</button>
-                  </Flex>
-               </Flex>
-            </div>
-         ))}
-         
-         {filteredDevices.length === 0 && (
-            <div className="col-span-full py-12 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-               <Server className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-               <h3 className="text-sm font-medium text-gray-900">No devices found</h3>
-               <p className="text-sm text-gray-500">Add network devices to start monitoring.</p>
-            </div>
-         )}
-      </Grid>
+          <CardContent className="p-0">
+             {filteredDevices.length > 0 ? (
+                <ul className="divide-y divide-gray-100">
+                  {filteredDevices.map(device => (
+                     <li key={device.id}>
+                        <Flex align="center" justify="between" className="px-6 py-4 group">
+                           <Flex align="center" gap={4} className="flex-1 min-w-0">
+                              <div className="p-2 bg-gray-100 rounded-lg"><DeviceIcon type={device.type} /></div>
+                              <div className="min-w-0">
+                                 <h4 className="text-sm font-bold text-gray-900 truncate">{device.name}</h4>
+                                 <Flex align="center" gap={2} className="text-xs text-gray-500 mt-1">
+                                    <span className="font-mono">{device.ip_address}</span>
+                                    {device.location && <><span className="text-gray-300">•</span><Flex align="center" gap={1}><MapPin className="w-3 h-3" />{device.location}</Flex></>}
+                                 </Flex>
+                              </div>
+                           </Flex>
+                           <Flex align="center" gap={4}>
+                              <DeviceStatusBadge status={device.status} />
+                              {hasPermission('manage_network') && (
+                                <Flex gap={1} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEditDevice(device)}>
+                                        <Edit2 className="w-4 h-4" />
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600">
+                                            <Trash2 className="w-4 h-4" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Device?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              Are you sure you want to remove {device.name}? This cannot be undone.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => onDeleteDevice(device.id)}>Delete</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </Flex>
+                              )}
+                           </Flex>
+                        </Flex>
+                     </li>
+                  ))}
+                </ul>
+             ) : (
+                <div className="p-6">
+                    <EmptyState 
+                        icon={Server}
+                        title="No network devices found"
+                        message={devices.length === 0 ? "Add your first network device to get started." : "No devices found matching your search."}
+                        action={devices.length === 0 && hasPermission('manage_network') ? { label: "Add Device", onClick: onAddDevice } : undefined}
+                    />
+                </div>
+             )}
+          </CardContent>
+      </Card>
     </div>
   );
 };

@@ -3,14 +3,15 @@ import { Ticket, TicketStatus, Employee, TicketPriority } from '../types';
 import { ArrowLeft, Edit2, Trash2, User, MapPin, Calendar, Clock, Wifi, FileText, CheckSquare, AlertTriangle, Microscope } from 'lucide-react';
 import { TicketStatusBadge, TicketPriorityBadge, TicketCategoryIcon } from './StatusBadges';
 import { TicketComments } from './TicketComments';
-import { EscalationModal } from './EscalationModal';
+import { EscalationModal } from './modals/EscalationModal';
 import { TicketWorkflow } from './TicketWorkflow';
-import { createComment } from '../services/commentService'; // Import needed for escalation logic
+import { createComment } from '../services/commentService';
 import { Card, CardHeader, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { Grid, GridItem } from './ui/grid';
 import { Flex } from './ui/flex';
+import { useToast } from '../contexts/ToastContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,24 +44,22 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
   employees = []
 }) => {
   const [showEscalationModal, setShowEscalationModal] = useState(false);
+  const toast = useToast();
 
   const isOverdue = ticket.due_date && new Date(ticket.due_date) < new Date() && ticket.status !== TicketStatus.CLOSED;
 
-  // Wrapper to handle async status updates from workflow directly via API
   const handleWorkflowUpdate = async (updates: Partial<Ticket>) => {
       await onUpdateStatus(ticket.id, updates);
   };
 
   const handleEscalationConfirm = async (reason: string, assignee: string) => {
       try {
-          // 1. Add System Comment
           await createComment({
               ticket_id: ticket.id,
               content: `🚨 **TICKET ESCALATED**\n\n**Reason:** ${reason}\n${assignee ? `**Reassigned to:** ${assignee}` : ''}`,
               author_name: "System"
           });
 
-          // 2. Update Ticket Status/Priority
           const updates: Partial<Ticket> = {
               is_escalated: true,
               priority: TicketPriority.HIGH,
@@ -70,18 +69,17 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
               updates.status = TicketStatus.ASSIGNED;
           }
 
-          // 3. Trigger parent update (which updates local state without reload)
           await onUpdateStatus(ticket.id, updates);
+          toast.success("Ticket has been escalated.");
       } catch (error) {
           console.error("Escalation failed", error);
-          alert("Failed to escalate ticket. Please try again.");
+          toast.error("Failed to escalate ticket. Please try again.");
       }
   };
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 relative">
       
-      {/* Header */}
       <Flex direction="col" justify="between" gap={4} className="sm:flex-row sm:items-start pb-2">
         <Flex align="start" gap={4}>
           <Button 
@@ -161,11 +159,7 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
       <Separator />
 
       <Grid cols={1} className="lg:grid-cols-3" gap={6}>
-        
-        {/* Main Content: Description */}
         <GridItem className="lg:col-span-2 space-y-6">
-           
-           {/* WORKFLOW COMPONENT */}
            <TicketWorkflow 
              ticket={ticket} 
              employees={employees} 
@@ -191,7 +185,6 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
               </CardContent>
            </Card>
 
-           {/* Resolution & RCA (Visible if Resolved or Closed) */}
            {(ticket.status === TicketStatus.RESOLVED || ticket.status === TicketStatus.VERIFIED || ticket.status === TicketStatus.CLOSED) && (
                <Grid cols={1} gap={6}>
                     <Card className="bg-green-50 border-green-200">
@@ -222,19 +215,15 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
                </Grid>
            )}
 
-           {/* Updates & Comments */}
            <TicketComments ticketId={ticket.id} />
         </GridItem>
 
-        {/* Sidebar: Metadata & Info */}
         <GridItem className="space-y-6">
-           {/* Assignment & SLA */}
            <Card>
                <CardHeader className="py-4">
                     <h3 className="text-lg font-medium text-gray-900 m-0">Ticket Info</h3>
                </CardHeader>
                <CardContent className="space-y-4">
-                   {/* Assigned To */}
                    <div>
                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Agent</span>
                        <Flex align="center" gap={2} className="mt-1">
@@ -247,7 +236,6 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
                        </Flex>
                    </div>
                    
-                   {/* Due Date */}
                    <div>
                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date (SLA)</span>
                        <Flex align="center" gap={2} className="mt-1">
@@ -259,7 +247,6 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
                        </Flex>
                    </div>
 
-                   {/* Category */}
                    <div>
                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Category</span>
                      <p className="mt-1 text-sm font-medium text-gray-900 capitalize">{ticket.category ? ticket.category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Uncategorized'}</p>
@@ -267,7 +254,6 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
                </CardContent>
            </Card>
 
-           {/* Customer Card */}
            <Card>
               <CardHeader className="py-4 flex flex-row items-center gap-2">
                  <User className="w-5 h-5 text-gray-500" />

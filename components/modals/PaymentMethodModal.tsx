@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Dialog, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+import { Dialog, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { Flex } from '../ui/flex';
+import { useToast } from '../../contexts/ToastContext';
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({ isOpen, 
   const [expiry, setExpiry] = useState('');
   const [bankName, setBankName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +35,10 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({ isOpen, 
       setLastFour('');
       setExpiry('');
       setBankName('');
+      toast.success("Payment method added.");
       onClose();
     } catch (e) {
-      alert("Failed to add payment method");
+      toast.error("Failed to add payment method.");
     } finally {
         setIsSubmitting(false);
     }

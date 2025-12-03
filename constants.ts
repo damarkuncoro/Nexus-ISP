@@ -1,6 +1,4 @@
 
-
-
 // Supabase Configuration
 // Note: In a production environment, these should be environment variables.
 // However, per the user's request and prompt context, they are included here for the generated app to function immediately.
@@ -22,6 +20,7 @@ DROP TABLE IF EXISTS public.plans CASCADE;
 DROP TABLE IF EXISTS public.employees CASCADE;
 DROP TABLE IF EXISTS public.ticket_categories CASCADE;
 DROP TABLE IF EXISTS public.system_settings CASCADE;
+DROP TABLE IF EXISTS public.departments CASCADE;
 
 -- 1. Create Plans Table
 create table public.plans (
@@ -43,7 +42,17 @@ create table public.ticket_categories (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. Create Customers Table (ISP Enhanced)
+-- 3. Create Departments Table
+create table public.departments (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  description text,
+  location text,
+  manager_name text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 4. Create Customers Table (ISP Enhanced)
 create table public.customers (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -74,8 +83,7 @@ create table public.customers (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 4. Create Tickets Table (ISP Enhanced with UUID)
--- Updated Status Check to include Workflow Steps
+-- 5. Create Tickets Table (ISP Enhanced with UUID)
 create table public.tickets (
   id uuid default gen_random_uuid() primary key,
   title text not null,
@@ -92,7 +100,7 @@ create table public.tickets (
   root_cause text
 );
 
--- 5. Create Invoices Table
+-- 6. Create Invoices Table
 create table public.invoices (
   id uuid default gen_random_uuid() primary key,
   customer_id uuid references public.customers(id) on delete cascade not null,
@@ -105,7 +113,7 @@ create table public.invoices (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 6. Create Payment Methods Table
+-- 7. Create Payment Methods Table
 create table public.payment_methods (
   id uuid default gen_random_uuid() primary key,
   customer_id uuid references public.customers(id) on delete cascade not null,
@@ -117,7 +125,7 @@ create table public.payment_methods (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 7. Create Ticket Comments Table
+-- 8. Create Ticket Comments Table
 create table public.ticket_comments (
   id uuid default gen_random_uuid() primary key,
   ticket_id uuid references public.tickets(id) on delete cascade not null,
@@ -126,7 +134,7 @@ create table public.ticket_comments (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 8. Create Network Devices Table
+-- 9. Create Network Devices Table
 create table public.network_devices (
   id uuid default gen_random_uuid() primary key,
   customer_id uuid references public.customers(id) on delete set null,
@@ -142,7 +150,7 @@ create table public.network_devices (
   firmware_version text
 );
 
--- 9. Create Employees Table
+-- 10. Create Employees Table (ISP Enhanced)
 create table public.employees (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -152,10 +160,14 @@ create table public.employees (
   phone text,
   department text,
   avatar_url text,
+  identity_number text,
+  address text,
+  hire_date date,
+  certifications text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 10. Create System Settings Table (Key-Value Store)
+-- 11. Create System Settings Table (Key-Value Store)
 create table public.system_settings (
   key text primary key,
   value text not null,
@@ -163,7 +175,7 @@ create table public.system_settings (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 11. Create Indexes (Optimization)
+-- 12. Create Indexes (Optimization)
 create index tickets_customer_id_idx on public.tickets(customer_id);
 create index customers_plan_id_idx on public.customers(plan_id);
 create index invoices_customer_id_idx on public.invoices(customer_id);
@@ -171,7 +183,7 @@ create index payment_methods_customer_id_idx on public.payment_methods(customer_
 create index ticket_comments_ticket_id_idx on public.ticket_comments(ticket_id);
 create index network_devices_customer_id_idx on public.network_devices(customer_id);
 
--- 12. Enable Row Level Security (RLS)
+-- 13. Enable Row Level Security (RLS)
 alter table public.customers enable row level security;
 alter table public.tickets enable row level security;
 alter table public.plans enable row level security;
@@ -182,8 +194,9 @@ alter table public.network_devices enable row level security;
 alter table public.employees enable row level security;
 alter table public.ticket_categories enable row level security;
 alter table public.system_settings enable row level security;
+alter table public.departments enable row level security;
 
--- 13. Create Public Access Policies (for demo)
+-- 14. Create Public Access Policies (for demo)
 create policy "Public Access Customers" on public.customers for all using (true);
 create policy "Public Access Tickets" on public.tickets for all using (true);
 create policy "Public Access Plans" on public.plans for all using (true);
@@ -194,17 +207,18 @@ create policy "Public Access Network Devices" on public.network_devices for all 
 create policy "Public Access Employees" on public.employees for all using (true);
 create policy "Public Access Categories" on public.ticket_categories for all using (true);
 create policy "Public Access Settings" on public.system_settings for all using (true);
+create policy "Public Access Departments" on public.departments for all using (true);
 
--- 14. Seed Default Data
+-- 15. Seed Default Data
 insert into public.plans (name, price, download_speed, upload_speed) values 
 ('Home Fiber Starter', 29.99, '50 Mbps', '10 Mbps'),
 ('Home Fiber Plus', 49.99, '100 Mbps', '50 Mbps'),
 ('Business Pro', 99.99, '1 Gbps', '1 Gbps');
 
-insert into public.employees (name, email, role, department, status) values 
-('Admin User', 'admin@nexus-isp.com', 'admin', 'Management', 'active'),
-('John Tech', 'john@nexus-isp.com', 'technician', 'Field Ops', 'active'),
-('Sarah Support', 'sarah@nexus-isp.com', 'support', 'Customer Service', 'active');
+insert into public.employees (name, email, role, department, status, hire_date, certifications) values 
+('Admin User', 'admin@nexus-isp.com', 'admin', 'Management', 'active', '2023-01-15', 'MTCNA, MTCRE, CCNA'),
+('John Tech', 'john@nexus-isp.com', 'technician', 'Field Ops', 'active', '2023-05-20', 'FO Certified'),
+('Sarah Support', 'sarah@nexus-isp.com', 'support', 'Customer Service', 'active', '2024-02-10', NULL);
 
 insert into public.ticket_categories (name, code, sla_hours, description) values
 ('Internet Issue', 'internet_issue', 4, 'Connectivity problems, slow speeds, packet loss.'),
@@ -213,6 +227,10 @@ insert into public.ticket_categories (name, code, sla_hours, description) values
 ('Installation', 'installation', 72, 'New service setup, moving services.'),
 ('Other', 'other', 24, 'General inquiries and feedback.');
 
+insert into public.departments (name, description, location, manager_name) values
+('Field Operations', 'Technicians and on-site support', 'HQ - Ground Floor', 'Mike Chief'),
+('Customer Service', 'Helpdesk and billing support', 'HQ - 1st Floor', 'Sarah Lead'),
+('Network Engineering', 'Core network infrastructure management', 'HQ - Server Room', 'Alex Net');
+
 insert into public.system_settings (key, value, description) values
-('currency', 'USD', 'Default currency code for the application');
-`;
+('currency', 'USD', 'Default currency code for the application')`;

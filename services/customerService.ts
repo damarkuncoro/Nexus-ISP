@@ -28,6 +28,20 @@ export const createCustomer = async (customer: Omit<Customer, 'id' | 'created_at
   return data as Customer;
 };
 
+export const updateCustomer = async (id: string, updates: Partial<Customer>): Promise<Customer> => {
+  const { data, error } = await supabase
+    .from('customers')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+  return data as Customer;
+};
+
 export const deleteCustomer = async (id: string): Promise<void> => {
   const { error } = await supabase
     .from('customers')

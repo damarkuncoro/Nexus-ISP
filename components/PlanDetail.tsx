@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SubscriptionPlan, Customer } from '../types';
 import { formatCurrency } from '../utils/formatters';
@@ -7,6 +8,8 @@ import { Flex } from './ui/flex';
 import { Grid } from './ui/grid';
 import { Button } from './ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/table';
+import { useAuth } from '../contexts/AuthContext';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 
 interface PlanDetailProps {
   plan: SubscriptionPlan;
@@ -27,6 +30,7 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
   onCustomerClick, 
   currency 
 }) => {
+  const { hasPermission } = useAuth();
   const planCustomers = customers.filter(c => c.plan_id === plan.id);
   const monthlyRevenue = planCustomers.length * plan.price;
 
@@ -54,14 +58,23 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
         </Flex>
         
         <Flex gap={2}>
-           <Button variant="outline" onClick={() => onEdit(plan)}>
-             <Edit2 className="w-4 h-4 mr-2" />
-             Edit
-           </Button>
-           <Button variant="destructive" onClick={() => onDelete(plan.id)}>
-             <Trash2 className="w-4 h-4 mr-2" />
-             Delete
-           </Button>
+           {hasPermission('manage_settings') && (
+            <Button variant="outline" onClick={() => onEdit(plan)}>
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+           )}
+           {hasPermission('delete_records') && (
+             <AlertDialog>
+               <AlertDialogTrigger asChild>
+                 <Button variant="destructive"><Trash2 className="w-4 h-4 mr-2" />Delete</Button>
+               </AlertDialogTrigger>
+               <AlertDialogContent>
+                 <AlertDialogHeader><AlertDialogTitle>Delete Plan?</AlertDialogTitle><AlertDialogDescription>This will remove the plan. Existing subscribers will not be affected but new ones cannot be assigned.</AlertDialogDescription></AlertDialogHeader>
+                 <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => onDelete(plan.id)}>Delete</AlertDialogAction></AlertDialogFooter>
+               </AlertDialogContent>
+             </AlertDialog>
+           )}
         </Flex>
       </Flex>
 
