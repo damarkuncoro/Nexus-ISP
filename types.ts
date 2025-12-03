@@ -159,6 +159,7 @@ export interface Ticket {
   priority: TicketPriority;
   category: string; 
   created_at: string;
+  updated_at: string;
   customer_id?: string | null; 
   customer?: Customer;
   is_escalated?: boolean; 

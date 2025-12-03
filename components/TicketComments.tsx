@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Flex } from './ui/flex';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 interface TicketCommentsProps {
   ticketId: string;
@@ -49,12 +50,11 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
                </div>
             ) : (
                comments.map((comment) => (
-                  <Flex key={comment.id} gap={4} align="start" className="group">
-                     <div className="flex-shrink-0">
-                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
-                           {comment.author_name.charAt(0)}
-                        </div>
-                     </div>
+                  <Flex key={comment.id} gap={3} align="start" className="group">
+                     <Avatar className="h-8 w-8">
+                        <AvatarImage src={`https://i.pravatar.cc/40?u=${comment.author_name}`} alt={comment.author_name} />
+                        <AvatarFallback>{comment.author_name.charAt(0)}</AvatarFallback>
+                     </Avatar>
                      <div className="flex-1 space-y-1">
                         <Flex align="center" justify="between">
                            <h4 className="text-sm font-bold text-gray-900">{comment.author_name}</h4>
@@ -71,11 +71,10 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
 
          {/* New Comment Form */}
          <Flex as="form" onSubmit={handleSubmit} gap={3} align="start" className="mt-6">
-            <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-bold">
-                   A
-                </div>
-            </div>
+            <Avatar className="h-8 w-8">
+                <AvatarImage src="https://i.pravatar.cc/40?u=Admin" alt="Admin" />
+                <AvatarFallback>A</AvatarFallback>
+            </Avatar>
             <div className="flex-1 relative space-y-2">
                <Textarea
                   rows={2}

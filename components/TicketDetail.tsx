@@ -243,7 +243,7 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
                            <p className={`text-sm font-medium ${isOverdue ? 'text-red-600 font-bold' : ticket.due_date ? 'text-gray-900' : 'text-gray-500 italic'}`}>
                                {ticket.due_date ? new Date(ticket.due_date).toLocaleDateString() : 'No Deadline'}
                            </p>
-                           {isOverdue && <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold">OVERDUE</span>}
+                           {isOverdue && <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-bold animate-pulse">OVERDUE</span>}
                        </Flex>
                    </div>
 
@@ -251,6 +251,10 @@ export const TicketDetail: React.FC<TicketDetailProps> = ({
                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Category</span>
                      <p className="mt-1 text-sm font-medium text-gray-900 capitalize">{ticket.category ? ticket.category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Uncategorized'}</p>
                   </div>
+                  <div>
+                       <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Last Update</span>
+                       <p className="mt-1 text-sm font-medium text-gray-900">{new Date(ticket.updated_at).toLocaleString()}</p>
+                   </div>
                </CardContent>
            </Card>
 

@@ -113,9 +113,9 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                     <Grid cols={1} className="sm:grid-cols-[1fr_auto]" gap={4} alignItems="end">
                         <div className="w-full">
                             <Label className="mb-1 block">Select Technician</Label>
-                            <Select value={assignee} onChange={(e) => setAssignee(e.target.value)}>
+                            <Select value={assignee} onChange={(e) => setAssignee(e.target.value)} disabled={isSubmitting}>
                                 <option value="">-- Choose Agent --</option>
-                                {employees.map(emp => (
+                                {employees.filter(emp => emp.role === 'technician' || emp.role === 'support').map(emp => (
                                     <option key={emp.id} value={emp.name}>{emp.name} ({emp.role})</option>
                                 ))}
                             </Select>
@@ -139,7 +139,7 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                         <h4 className="font-medium text-gray-900">Step 2: Acknowledge & Start</h4>
                         <p className="text-sm text-gray-500">Technician has received the ticket. Start troubleshooting.</p>
                     </div>
-                    <Button onClick={handleStartWork} isLoading={isSubmitting}>
+                    <Button onClick={handleStartWork} isLoading={isSubmitting} disabled={isSubmitting}>
                         <Play className="w-4 h-4 mr-2" /> Start Troubleshooting
                     </Button>
                 </Flex>
@@ -157,6 +157,7 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                             onChange={(e) => setResolutionNote(e.target.value)}
                             placeholder="What actions were taken to fix the issue?"
                             className="mb-3"
+                            disabled={isSubmitting}
                         />
                     </div>
                     <div>
@@ -165,10 +166,11 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                             value={rootCause} 
                             onChange={(e) => setRootCause(e.target.value)}
                             placeholder="Why did this happen? (e.g. Fiber cut, Power outage)"
+                            disabled={isSubmitting}
                         />
                     </div>
                     <Flex justify="end" className="mt-2">
-                         <Button onClick={handleResolve} isLoading={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
+                         <Button onClick={handleResolve} isLoading={isSubmitting} disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
                              <Check className="w-4 h-4 mr-2" /> Mark Resolved
                          </Button>
                     </Flex>
@@ -182,10 +184,10 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                         <p className="text-sm text-gray-500">Confirm with the customer that services are restored.</p>
                     </div>
                     <Flex gap={2}>
-                        <Button variant="outline" onClick={handleStartWork} isLoading={isSubmitting}>
+                        <Button variant="outline" onClick={handleStartWork} isLoading={isSubmitting} disabled={isSubmitting}>
                              Not Fixed (Reopen)
                         </Button>
-                        <Button onClick={handleVerify} isLoading={isSubmitting} className="bg-teal-600 hover:bg-teal-700">
+                        <Button onClick={handleVerify} isLoading={isSubmitting} disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700">
                              <Search className="w-4 h-4 mr-2" /> Verify Success
                         </Button>
                     </Flex>
@@ -198,7 +200,7 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                         <h4 className="font-medium text-gray-900">Step 5: Final Closure</h4>
                         <p className="text-sm text-gray-500">Review ticket data and close the incident.</p>
                     </div>
-                    <Button onClick={handleClose} isLoading={isSubmitting} variant="secondary">
+                    <Button onClick={handleClose} isLoading={isSubmitting} disabled={isSubmitting} variant="secondary">
                          <CheckCircle2 className="w-4 h-4 mr-2" /> Close Ticket
                     </Button>
                 </Flex>
