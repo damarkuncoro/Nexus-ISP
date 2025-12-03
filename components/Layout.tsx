@@ -157,7 +157,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           )}
         
           {/* Main scrollable content area */}
-          <FlexItem as="main" grow className="overflow-y-auto">
+          <FlexItem as="main" grow className="overflow-y-auto p-6">
             {children}
           </FlexItem>
       </div>
