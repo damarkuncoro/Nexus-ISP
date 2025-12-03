@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Customer, CustomerStatus, SubscriptionPlan, CustomerType, InstallationStatus } from '../../types';
 import { Save, ArrowLeft, User, MapPin, Wifi } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { Button } from '../ui/button';
@@ -72,25 +73,22 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
   };
 
   return (
-    <div className="max-w-3xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6 flex items-center justify-between">
-         <Button 
-           variant="ghost"
-           onClick={onClose} 
-           className="text-gray-600 hover:text-gray-900 pl-0"
-         >
-             <ArrowLeft className="w-5 h-5 mr-2" /> Back to Subscribers
-         </Button>
+    <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
+      <div className="mb-8 border-b border-gray-200 pb-6">
+         <Flex align="center" gap={4}>
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
+             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           </Button>
+           <div>
+             <h1 className="text-2xl font-bold text-gray-900">New Registration</h1>
+             <p className="text-sm text-gray-500 mt-1">Input prospective customer details for survey and installation</p>
+           </div>
+         </Flex>
       </div>
 
       <Card>
-          <CardHeader>
-            <CardTitle>New Registration / Lead</CardTitle>
-            <CardDescription>Input prospective customer details for survey and installation.</CardDescription>
-          </CardHeader>
-            
           <form onSubmit={handleSubmit}>
-            <CardContent>
+            <CardContent className="p-6">
                 <Tabs defaultValue="identity" value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="grid w-full grid-cols-3 mb-6">
                         <TabsTrigger value="identity"><User className="w-4 h-4 mr-2" />1. Identity</TabsTrigger>

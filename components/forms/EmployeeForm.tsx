@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Employee, EmployeeRole, EmployeeStatus, Department } from '../../types';
 import { Save, ArrowLeft, User, Briefcase, Fingerprint } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/card';
+import { Card, CardContent, CardFooter } from '../ui/card';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Grid } from '../ui/grid';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
+import { Flex } from '../ui/flex';
 
 interface EmployeeFormProps {
   onClose: () => void;
@@ -85,24 +86,22 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
   };
 
   return (
-    <div className="max-w-3xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6">
-         <Button 
-           variant="ghost"
-           onClick={onClose} 
-         >
-             <ArrowLeft className="w-5 h-5 mr-2" /> Back to Team
-         </Button>
+    <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
+      <div className="mb-8 border-b border-gray-200 pb-6">
+         <Flex align="center" gap={4}>
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
+             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           </Button>
+           <div>
+             <h1 className="text-2xl font-bold text-gray-900">{initialData ? 'Edit Member' : 'New Member'}</h1>
+             <p className="text-sm text-gray-500 mt-1">Manage staff profiles, roles, and administrative data</p>
+           </div>
+         </Flex>
       </div>
 
       <Card>
-          <CardHeader>
-            <CardTitle>{initialData ? 'Edit Team Member' : 'Add Team Member'}</CardTitle>
-            <CardDescription>Manage staff profiles, roles, and administrative data.</CardDescription>
-          </CardHeader>
-            
           <form onSubmit={handleSubmit}>
-            <CardContent>
+            <CardContent className="p-6">
               <Tabs defaultValue="profile" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger value="profile"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
@@ -149,7 +148,7 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
               </Tabs>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 bg-gray-50/50 mt-8">
+            <CardFooter className="flex justify-end gap-3 bg-gray-50/50 p-6 mt-4">
                 <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}><Save className="w-4 h-4 mr-2" /> Save Member</Button>
             </CardFooter>

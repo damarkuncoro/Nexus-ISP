@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { Ticket, TicketStatus, TicketPriority, Customer, Employee, TicketCategoryConfig } from '../../types';
 import { Save, FileText, Tag, ArrowLeft, CheckCircle, Microscope, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Grid, GridItem } from '../ui/grid';
+import { Flex } from '../ui/flex';
 
 interface TicketFormProps {
   onClose: () => void;
@@ -152,27 +154,20 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   const currentCategoryConfig = categories.find(c => c.code === category);
 
   return (
-    <div className="max-w-4xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6 flex items-center justify-between">
-         <Button 
-           variant="ghost"
-           onClick={onClose} 
-           className="text-gray-600 hover:text-gray-900"
-         >
-             <ArrowLeft className="w-5 h-5 mr-2" /> Back to Tickets
-         </Button>
+    <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
+      <div className="mb-8 border-b border-gray-200 pb-6">
+         <Flex align="center" gap={4}>
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
+             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           </Button>
+           <div>
+             <h1 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Edit Ticket' : 'New Ticket'}</h1>
+             <p className="text-sm text-gray-500 mt-1">{isEditMode ? `Updating ticket #${initialData?.id?.substring(0, 8)}` : 'Create a new support ticket'}</p>
+           </div>
+         </Flex>
       </div>
 
       <Card>
-          <CardHeader>
-            <h3 className="text-xl font-bold text-gray-900">
-                {isEditMode ? 'Edit Support Ticket' : 'Create New Ticket'}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-                {isEditMode ? `Updating Ticket #${initialData?.id?.substring(0, 8)}` : 'Fill in the details below to create a new support ticket.'}
-            </p>
-          </CardHeader>
-          
           <form onSubmit={handleSubmit}>
             <CardContent className="p-8">
                 <Grid cols={1} className="lg:grid-cols-3" gap={10}>

@@ -1,11 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { SubscriptionPlan } from '../../types';
 import { Save, Wifi, ArrowLeft } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../ui/card';
+import { Card, CardContent, CardFooter } from '../ui/card';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Grid } from '../ui/grid';
+import { Flex } from '../ui/flex';
 
 interface PlanFormProps {
   onClose: () => void;
@@ -55,24 +57,22 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
   };
 
   return (
-    <div className="max-w-2xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-6">
-         <Button 
-           variant="ghost"
-           onClick={onClose} 
-         >
-             <ArrowLeft className="w-5 h-5 mr-2" /> Back to Plans
-         </Button>
+    <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
+      <div className="mb-8 border-b border-gray-200 pb-6">
+         <Flex align="center" gap={4}>
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
+             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           </Button>
+           <div>
+             <h1 className="text-2xl font-bold text-gray-900">{initialData ? 'Edit Service Plan' : 'New Service Plan'}</h1>
+             <p className="text-sm text-gray-500 mt-1">Configure plan details, pricing, and speed limits</p>
+           </div>
+         </Flex>
       </div>
       
       <Card>
-          <CardHeader>
-            <CardTitle>{initialData ? 'Edit Service Plan' : 'Add New Service Plan'}</CardTitle>
-            <CardDescription>Configure plan details, pricing, and speed limits.</CardDescription>
-          </CardHeader>
-            
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-8">
               <div>
                 <Label htmlFor="plan-name">Plan Name</Label>
                 <div className="relative mt-1">
@@ -105,7 +105,7 @@ export const PlanForm: React.FC<PlanFormProps> = ({ onClose, onSubmit, initialDa
               </Grid>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 bg-gray-50/50">
+            <CardFooter className="flex justify-end gap-3 bg-gray-50/50 p-6">
                 <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}><Save className="w-4 h-4 mr-2" />Save Plan</Button>
             </CardFooter>
