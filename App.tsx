@@ -269,6 +269,7 @@ const renderContent = () => {
       return <TicketForm
         ticket={editingTicket}
         customers={customers}
+        employees={employees}
         categories={categories}
         onSubmit={editingTicket?.id ? handleUpdateTicket : handleCreateTicket}
         onCancel={() => setView('tickets')}
