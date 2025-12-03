@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, forwardRef, HTMLAttributes } from 'react';
 import { cn } from '../../utils/cn';
 import { Button, ButtonProps } from './button';
@@ -21,7 +20,7 @@ const useAlertDialog = () => {
 
 // --- Root ---
 interface AlertDialogProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   defaultOpen?: boolean;

@@ -6,7 +6,8 @@ import { Button } from './ui/button';
 import { Select } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
-import { Check, UserPlus, Play, CheckCircle2, Search, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Check, UserPlus, Play, CheckCircle2, Search, AlertTriangle, FileText, Microscope } from 'lucide-react';
 import { Flex } from './ui/flex';
 import { Grid } from './ui/grid';
 
@@ -148,26 +149,42 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
             {ticket.status === TicketStatus.IN_PROGRESS && (
                 <div className="space-y-4">
                     <h4 className="font-medium text-gray-900">Step 3: Resolve & Report</h4>
-                    <p className="text-sm text-gray-500">Issue fixed? Document the solution and root cause.</p>
+                    <p className="text-sm text-gray-500 mb-2">Issue fixed? Document the solution details below.</p>
                     
-                    <div>
-                        <Label className="mb-1">Resolution Notes <span className="text-red-500">*</span></Label>
-                        <Textarea 
-                            value={resolutionNote} 
-                            onChange={(e) => setResolutionNote(e.target.value)}
-                            placeholder="What actions were taken to fix the issue?"
-                            className="mb-3"
-                        />
-                    </div>
-                    <div>
-                        <Label className="mb-1">Root Cause Analysis (RCA)</Label>
-                        <Textarea 
-                            value={rootCause} 
-                            onChange={(e) => setRootCause(e.target.value)}
-                            placeholder="Why did this happen? (e.g. Fiber cut, Power outage)"
-                        />
-                    </div>
-                    <Flex justify="end" className="mt-2">
+                    <Tabs defaultValue="resolution" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-4">
+                            <TabsTrigger value="resolution">
+                                <FileText className="w-4 h-4 mr-2" /> Resolution Notes
+                            </TabsTrigger>
+                            <TabsTrigger value="rca">
+                                <Microscope className="w-4 h-4 mr-2" /> Root Cause Analysis (RCA)
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="resolution" className="space-y-3">
+                            <Label className="mb-1">Resolution Details <span className="text-red-500">*</span></Label>
+                            <Textarea 
+                                value={resolutionNote} 
+                                onChange={(e) => setResolutionNote(e.target.value)}
+                                placeholder="Describe the specific actions taken to fix the issue (e.g., replaced router, spliced fiber, reset port configuration)..."
+                                className="min-h-[150px]"
+                            />
+                            <p className="text-xs text-gray-500">Required for closure.</p>
+                        </TabsContent>
+
+                        <TabsContent value="rca" className="space-y-3">
+                            <Label className="mb-1">Root Cause Analysis (RCA)</Label>
+                            <Textarea 
+                                value={rootCause} 
+                                onChange={(e) => setRootCause(e.target.value)}
+                                placeholder="Identify the underlying cause (e.g., cable cut by third party, power surge, configuration error)..."
+                                className="min-h-[150px]"
+                            />
+                            <p className="text-xs text-gray-500">Optional but recommended for recurring issues.</p>
+                        </TabsContent>
+                    </Tabs>
+
+                    <Flex justify="end" className="mt-4 pt-2 border-t border-gray-200">
                          <Button onClick={handleResolve} isLoading={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
                              <Check className="w-4 h-4 mr-2" /> Mark Resolved
                          </Button>

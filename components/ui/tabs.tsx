@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 
@@ -13,7 +12,7 @@ interface TabsProps {
   defaultValue: string;
   value?: string;
   onValueChange?: (value: string) => void;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
 }
 
@@ -30,7 +29,7 @@ const Tabs = ({ defaultValue, value, onValueChange, children, className }: TabsP
   );
 };
 
-const TabsList = ({ className, children }: { className?: string; children: ReactNode }) => (
+const TabsList = ({ className, children }: { className?: string; children?: ReactNode }) => (
   <div className={cn("inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-500", className)}>
     {children}
   </div>
@@ -38,7 +37,7 @@ const TabsList = ({ className, children }: { className?: string; children: React
 
 interface TabsTriggerProps {
   value: string;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
   disabled?: boolean;
 }
@@ -67,7 +66,7 @@ const TabsTrigger = ({ value, children, className, disabled }: TabsTriggerProps)
   );
 };
 
-const TabsContent = ({ value, children, className }: { value: string; children: ReactNode; className?: string }) => {
+const TabsContent = ({ value, children, className }: { value: string; children?: ReactNode; className?: string }) => {
   const context = useContext(TabsContext);
   if (!context) throw new Error("TabsContent must be used within Tabs");
 

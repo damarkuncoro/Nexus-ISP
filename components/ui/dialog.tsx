@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useEffect } from 'react';
 import { cn } from '../../utils/cn';
 import { X } from 'lucide-react';
@@ -6,7 +5,7 @@ import { X } from 'lucide-react';
 interface DialogProps {
   isOpen: boolean;
   onClose: () => void;
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
 }
 

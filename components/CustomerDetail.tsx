@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Customer, Ticket, NetworkDevice, SubscriptionPlan, InstallationStatus, CustomerStatus, CustomerType } from '../types';
-import { ArrowLeft, Mail, Building, MapPin, Wifi, Calendar, Shield, CreditCard, LayoutDashboard, Plus, Router, HardHat, Phone, Globe, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Building, MapPin, Wifi, Calendar, Shield, CreditCard, LayoutDashboard, Plus, Router, HardHat, Phone, Globe, CheckCircle, FileText } from 'lucide-react';
 import { TicketList } from './TicketList';
 import { BillingSection } from './BillingSection';
 import { CustomerDevices } from './CustomerDevices';
@@ -14,6 +14,7 @@ import { Flex } from './ui/flex';
 import { Grid, GridItem } from './ui/grid';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -52,18 +53,24 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
 }) => {
   const [odpPort, setOdpPort] = useState(customer.odp_port || '');
   const [coordinates, setCoordinates] = useState(customer.coordinates || '');
+  const [surveyNotes, setSurveyNotes] = useState(customer.survey_notes || '');
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
     setOdpPort(customer.odp_port || '');
     setCoordinates(customer.coordinates || '');
+    setSurveyNotes(customer.survey_notes || '');
   }, [customer]);
 
   const handleSaveTechData = async () => {
     setIsSaving(true);
     try {
-      await onUpdateCustomer(customer.id, { odp_port: odpPort, coordinates });
+      await onUpdateCustomer(customer.id, { 
+          odp_port: odpPort, 
+          coordinates,
+          survey_notes: surveyNotes
+      });
     } finally {
       setIsSaving(false);
     }
@@ -152,19 +159,37 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                     <Card>
                         <CardHeader className="py-4"><h2 className="text-lg font-medium text-gray-900">Infrastructure Mapping & Workflow</h2></CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <Label className="text-gray-500 text-xs uppercase mb-2 block">Current Installation Stage</Label>
-                                <Flex align="center" gap={4}>
-                                    <InstallationStatusBadge status={customer.installation_status} />
-                                    {customer.installation_status === InstallationStatus.PENDING_SURVEY && <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(InstallationStatus.SCHEDULED)} isLoading={isUpdatingStatus}>Schedule Survey</Button>}
-                                    {customer.installation_status === InstallationStatus.SCHEDULED && <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(InstallationStatus.SURVEY_COMPLETED)} isLoading={isUpdatingStatus}>Complete Survey</Button>}
-                                    {customer.installation_status === InstallationStatus.SURVEY_COMPLETED && <Button size="sm" onClick={() => handleStatusUpdate(InstallationStatus.INSTALLED)} isLoading={isUpdatingStatus} className="bg-green-600 hover:bg-green-700">Mark as Installed</Button>}
-                                </Flex>
+                            
+                            <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                                <div className="p-4 border-b border-gray-200">
+                                    <Label className="text-gray-500 text-xs uppercase mb-2 block">Current Installation Stage</Label>
+                                    <Flex align="center" gap={4}>
+                                        <InstallationStatusBadge status={customer.installation_status} />
+                                        {customer.installation_status === InstallationStatus.PENDING_SURVEY && <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(InstallationStatus.SCHEDULED)} isLoading={isUpdatingStatus}>Schedule Survey</Button>}
+                                        {customer.installation_status === InstallationStatus.SCHEDULED && <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(InstallationStatus.SURVEY_COMPLETED)} isLoading={isUpdatingStatus}>Complete Survey</Button>}
+                                        {customer.installation_status === InstallationStatus.SURVEY_COMPLETED && <Button size="sm" onClick={() => handleStatusUpdate(InstallationStatus.INSTALLED)} isLoading={isUpdatingStatus} className="bg-green-600 hover:bg-green-700">Mark as Installed</Button>}
+                                    </Flex>
+                                </div>
+                                <div className="p-4 bg-gray-50/50">
+                                     <Label className="mb-2 block flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-gray-500" />
+                                        Survey / Installation Notes
+                                    </Label>
+                                    <Textarea 
+                                        value={surveyNotes} 
+                                        onChange={(e) => setSurveyNotes(e.target.value)} 
+                                        placeholder="Enter survey results, installation obstacles, or technical notes..."
+                                        rows={3}
+                                        className="bg-white"
+                                    />
+                                </div>
                             </div>
+
                             <Grid cols={1} className="md:grid-cols-2" gap={6}>
                                 <div><Label className="mb-1">ODP Port / FDT</Label><Input value={odpPort} onChange={(e) => setOdpPort(e.target.value)} placeholder="e.g. ODP-JKT-01/4" /><p className="text-xs text-gray-500 mt-1">Optical Distribution Point assignment.</p></div>
                                 <div><Label className="mb-1">Geo Coordinates</Label><div className="relative"><Input value={coordinates} onChange={(e) => setCoordinates(e.target.value)} placeholder="-6.123, 106.123" /><Globe className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" /></div><p className="text-xs text-gray-500 mt-1">Latitude, Longitude for map visualization.</p></div>
                             </Grid>
+
                             <div className="flex justify-end border-t border-gray-100 pt-4">
                                 <Button onClick={handleSaveTechData} isLoading={isSaving}>Save Technical Data</Button>
                             </div>
