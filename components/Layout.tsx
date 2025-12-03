@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield } from 'lucide-react';
+import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield, Package, CircleDollarSign, Search } from 'lucide-react';
 import { APP_NAME } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { EmployeeRole } from '../types';
@@ -8,8 +9,8 @@ import { Flex, FlexItem } from './ui/flex';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentView: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts';
-  onViewChange: (view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts') => void;
+  currentView: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory' | 'finance';
+  onViewChange: (view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory' | 'finance') => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewChange }) => {
@@ -18,9 +19,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   
   const { currentUser, loginAs, hasPermission } = useAuth();
 
-  const NavItem = ({ view, icon: Icon, label }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts', icon: any, label: string }) => {
+  const NavItem = ({ view, icon: Icon, label }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory' | 'finance', icon: any, label: string }) => {
     if (view === 'settings' && !hasPermission('manage_settings')) return null;
     if (view === 'employees' && !hasPermission('manage_team')) return null;
+    if (view === 'inventory' && !hasPermission('manage_network') && !hasPermission('view_billing')) return null;
+    if (view === 'finance' && !hasPermission('view_billing')) return null;
     
     return (
       <button
@@ -28,7 +31,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           onViewChange(view);
           setIsMobileMenuOpen(false);
         }}
-        className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-150 ease-in-out ${
+        className={`w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors duration-150 ease-in-out ${
           currentView === view
             ? 'bg-primary-50 text-primary-700'
             : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -40,10 +43,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
     );
   };
 
+  const NavGroup = ({ title, children }: { title?: string, children: React.ReactNode }) => (
+    <div className="space-y-1">
+      {title && <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">{title}</p>}
+      {children}
+    </div>
+  );
+
   const handleRoleSwitch = (role: EmployeeRole) => {
     loginAs(role);
     setIsProfileMenuOpen(false);
-    if (role === EmployeeRole.SUPPORT && (currentView === 'settings' || currentView === 'employees' || currentView === 'network')) {
+    if (role === EmployeeRole.SUPPORT && (currentView === 'settings' || currentView === 'employees' || currentView === 'network' || currentView === 'inventory')) {
         onViewChange('dashboard');
     }
   };
@@ -55,6 +65,41 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           case EmployeeRole.TECHNICIAN: return 'bg-orange-600 text-white';
           default: return 'bg-green-600 text-white';
       }
+  };
+
+  const NavigationContent = () => (
+    <>
+      <NavGroup>
+        <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
+      </NavGroup>
+
+      <NavGroup title="Operations">
+        <NavItem view="alerts" icon={Bell} label="NOC Alerts" />
+        <NavItem view="tickets" icon={TicketIcon} label="Helpdesk" />
+        <NavItem view="network" icon={Server} label="Network Devices" />
+      </NavGroup>
+
+      <NavGroup title="Business">
+        <NavItem view="customers" icon={Users} label="Subscribers" />
+        <NavItem view="plans" icon={Wifi} label="Service Plans" />
+        <NavItem view="finance" icon={CircleDollarSign} label="Finance" />
+      </NavGroup>
+
+      <NavGroup title="Resources">
+        <NavItem view="inventory" icon={Package} label="Warehouse" />
+        <NavItem view="employees" icon={Briefcase} label="Team" />
+      </NavGroup>
+    </>
+  );
+
+  // Trigger Command Palette via fake keyboard event if clicked
+  const triggerCommandPalette = () => {
+      const event = new KeyboardEvent('keydown', {
+          key: 'k',
+          metaKey: true,
+          bubbles: true
+      });
+      window.dispatchEvent(event);
   };
 
   return (
@@ -70,14 +115,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           </Flex>
         </Flex>
         
-        <FlexItem grow className="overflow-y-auto py-6 px-4 space-y-1">
-          <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
-          <NavItem view="alerts" icon={Bell} label="NOC Alerts" />
-          <NavItem view="tickets" icon={TicketIcon} label="All Tickets" />
-          <NavItem view="customers" icon={Users} label="Subscribers" />
-          <NavItem view="plans" icon={Wifi} label="Service Plans" />
-          <NavItem view="network" icon={Server} label="Network Devices" />
-          <NavItem view="employees" icon={Briefcase} label="Team" />
+        <FlexItem grow className="overflow-y-auto py-6 px-4">
+          <NavigationContent />
         </FlexItem>
 
         <div className="p-4 border-t border-gray-100 flex-shrink-0">
@@ -99,26 +138,31 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
 
             {/* Top Navbar (Desktop) */}
             <Flex align="center" justify="between" className="hidden md:flex h-16 px-8">
-              <div className="text-sm text-gray-500">
-                  Welcome back, <span className="font-semibold text-gray-900">{currentUser?.name || 'User'}</span>
+              <div className="w-64">
+                  <button 
+                    onClick={triggerCommandPalette}
+                    className="w-full flex items-center justify-between bg-gray-50 border border-gray-200 text-gray-500 text-sm rounded-lg px-3 py-1.5 hover:bg-gray-100 transition-colors"
+                  >
+                      <span className="flex items-center gap-2"><Search className="w-4 h-4" /> Search...</span>
+                      <span className="text-xs bg-white border border-gray-200 px-1.5 py-0.5 rounded shadow-sm">⌘K</span>
+                  </button>
               </div>
               
               <Flex align="center" gap={4}>
+                  <div className="text-sm text-gray-500 border-r border-gray-200 pr-4 mr-2">
+                      <span className="font-semibold text-gray-900">{currentUser?.name || 'User'}</span>
+                  </div>
+
                   <div className="relative">
                     <button 
                         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                        className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full hover:bg-gray-100 border border-transparent hover:border-gray-200 transition-all"
+                        className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition-all"
                     >
                         <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
                             <AvatarFallback className={`${getRoleColor(currentUser?.role)} text-xs font-bold`}>
                                 {currentUser?.name.charAt(0)}
                             </AvatarFallback>
                         </Avatar>
-                        
-                        <div className="text-left hidden lg:block">
-                            <p className="text-xs font-bold text-gray-700">{currentUser?.name}</p>
-                            <p className="text-[10px] text-gray-500 uppercase">{currentUser?.role}</p>
-                        </div>
                         <ChevronDown className="w-4 h-4 text-gray-400" />
                     </button>
 
@@ -139,15 +183,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           {/* Mobile Menu Overlay */}
           {isMobileMenuOpen && (
             <div className="md:hidden fixed inset-0 z-10 bg-gray-800 bg-opacity-50 pt-16 animate-in fade-in duration-300">
-              <div className="bg-white w-full h-auto pb-6 shadow-xl rounded-b-2xl animate-in slide-in-from-top-4 duration-300">
-                <div className="px-4 py-2 space-y-1">
-                  <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
-                  <NavItem view="alerts" icon={Bell} label="NOC Alerts" />
-                  <NavItem view="tickets" icon={TicketIcon} label="All Tickets" />
-                  <NavItem view="customers" icon={Users} label="Subscribers" />
-                  <NavItem view="plans" icon={Wifi} label="Service Plans" />
-                  <NavItem view="network" icon={Server} label="Network Devices" />
-                  <NavItem view="employees" icon={Briefcase} label="Team" />
+              <div className="bg-white w-full h-auto pb-6 shadow-xl rounded-b-2xl animate-in slide-in-from-top-4 duration-300 overflow-y-auto max-h-[80vh]">
+                <div className="px-4 py-4 space-y-1">
+                  <NavigationContent />
                   <div className="border-t border-gray-100 my-2 pt-2">
                     <NavItem view="settings" icon={Settings} label="Settings" />
                   </div>

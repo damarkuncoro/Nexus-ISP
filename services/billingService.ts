@@ -16,6 +16,26 @@ export const fetchInvoices = async (customerId: string): Promise<Invoice[]> => {
   return data as Invoice[];
 };
 
+// New: Fetch all invoices globally with customer details
+export const fetchAllInvoices = async (): Promise<Invoice[]> => {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*, customer:customers(name, email, company)')
+    .order('issued_date', { ascending: false })
+    .limit(500);
+
+  if (error) {
+    if (error.code === 'PGRST205' || error.code === '42P01') return [];
+    if (error.code === 'PGRST200') {
+        // Fallback if relation fails
+        const { data: simpleData } = await supabase.from('invoices').select('*').order('issued_date', { ascending: false });
+        return simpleData as Invoice[];
+    }
+    throw error;
+  }
+  return data as Invoice[];
+};
+
 export const fetchPaymentMethods = async (customerId: string): Promise<PaymentMethod[]> => {
   const { data, error } = await supabase
     .from('payment_methods')
@@ -39,6 +59,17 @@ export const generateInvoice = async (invoice: Omit<Invoice, 'id' | 'created_at'
 
   if (error) throw error;
   return data as Invoice;
+};
+
+// New: Batch insert invoices
+export const createBulkInvoices = async (invoices: Omit<Invoice, 'id' | 'created_at'>[]): Promise<Invoice[]> => {
+  const { data, error } = await supabase
+    .from('invoices')
+    .insert(invoices)
+    .select();
+
+  if (error) throw error;
+  return data as Invoice[];
 };
 
 export const updateInvoiceStatus = async (id: string, status: InvoiceStatus): Promise<Invoice> => {

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield, Package } from 'lucide-react';
+import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield, Package, CircleDollarSign } from 'lucide-react';
 import { APP_NAME } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { EmployeeRole } from '../types';
@@ -8,8 +8,8 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentView: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory';
-  onViewChange: (view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory') => void;
+  currentView: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory' | 'finance';
+  onViewChange: (view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory' | 'finance') => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewChange }) => {
@@ -18,11 +18,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   
   const { currentUser, loginAs, hasPermission } = useAuth();
 
-  const NavItem = ({ view, icon: Icon, label }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory', icon: any, label: string }) => {
+  const NavItem = ({ view, icon: Icon, label }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory' | 'finance', icon: any, label: string }) => {
     // Basic protection logic for sidebar visibility
     if (view === 'settings' && !hasPermission('manage_settings')) return null;
     if (view === 'employees' && !hasPermission('manage_team')) return null;
     if (view === 'inventory' && !hasPermission('manage_network') && !hasPermission('view_billing')) return null;
+    if (view === 'finance' && !hasPermission('view_billing')) return null;
     
     return (
       <button
@@ -76,8 +77,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
           <NavItem view="alerts" icon={Bell} label="NOC Alerts" />
           <NavItem view="tickets" icon={TicketIcon} label="All Tickets" />
+          
+          <div className="pt-4 pb-1 pl-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Business</div>
           <NavItem view="customers" icon={Users} label="Subscribers" />
           <NavItem view="plans" icon={Wifi} label="Service Plans" />
+          <NavItem view="finance" icon={CircleDollarSign} label="Finance & Billing" />
+          
+          <div className="pt-4 pb-1 pl-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Operations</div>
           <NavItem view="network" icon={Server} label="Network Devices" />
           <NavItem view="inventory" icon={Package} label="Warehouse" />
           <NavItem view="employees" icon={Briefcase} label="Team" />
@@ -109,11 +115,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
                <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
                <NavItem view="alerts" icon={Bell} label="NOC Alerts" />
                <NavItem view="tickets" icon={TicketIcon} label="All Tickets" />
-               <NavItem view="customers" icon={Users} label="Subscribers" />
-               <NavItem view="plans" icon={Wifi} label="Service Plans" />
-               <NavItem view="network" icon={Server} label="Network Devices" />
-               <NavItem view="inventory" icon={Package} label="Warehouse" />
-               <NavItem view="employees" icon={Briefcase} label="Team" />
+               <div className="border-t border-gray-100 my-2 pt-2">
+                 <NavItem view="customers" icon={Users} label="Subscribers" />
+                 <NavItem view="finance" icon={CircleDollarSign} label="Finance" />
+               </div>
+               <div className="border-t border-gray-100 my-2 pt-2">
+                 <NavItem view="network" icon={Server} label="Network" />
+                 <NavItem view="inventory" icon={Package} label="Warehouse" />
+               </div>
                <div className="border-t border-gray-100 my-2 pt-2">
                  <NavItem view="settings" icon={Settings} label="Settings" />
                </div>

@@ -18,9 +18,11 @@ import { EmployeeForm } from './components/forms/EmployeeForm';
 import { EmployeeDetail } from './components/EmployeeDetail';
 import { InventoryView } from './components/InventoryView';
 import { InventoryForm } from './components/forms/InventoryForm';
+import { FinanceView } from './components/FinanceView';
 import { SettingsView } from './components/SettingsView';
 import { AlertsView } from './components/AlertsView';
 import { AccessDenied } from './components/AccessDenied';
+import { CommandPalette } from './components/CommandPalette';
 import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem } from './types';
 import { Plus, Loader2 } from 'lucide-react';
 import { SETUP_SQL } from './constants';
@@ -46,13 +48,14 @@ type AppView =
   | 'settings' 
   | 'employees' | 'employee-form'
   | 'alerts'
-  | 'inventory' | 'inventory-form';
+  | 'inventory' | 'inventory-form'
+  | 'finance';
 
 export const App: React.FC = () => {
   const [view, setView] = useState<AppView>('dashboard');
   const toast = useToast();
   
-  const { hasPermission } = useAuth();
+  const { hasPermission, logout } = useAuth();
   const { currency, saveCurrency, loading: settingsLoading } = useSettings();
 
   const { tickets, loading: ticketsLoading, error: ticketsError, loadTickets, addTicket, editTicket, removeTicket } = useTickets();
@@ -62,7 +65,7 @@ export const App: React.FC = () => {
   const { employees, loading: employeesLoading, loadEmployees, addEmployee, editEmployee, removeEmployee } = useEmployees();
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
   const { departments, loading: departmentsLoading, loadDepartments } = useDepartments();
-  const { items: inventoryItems, addItem: addInventoryItem, editItem: editInventoryItem } = useInventory(); // Hooks instantiated here but loaded in View
+  const { items: inventoryItems, addItem: addInventoryItem, editItem: editInventoryItem } = useInventory(); 
 
   const loading = ticketsLoading || customersLoading || plansLoading || devicesLoading || employeesLoading || categoriesLoading || departmentsLoading || settingsLoading;
   const globalError = ticketsError || customersError;
@@ -112,7 +115,6 @@ export const App: React.FC = () => {
   const handleViewChange = (newView: AppView) => {
     setPreviousView(null); 
     setView(newView);
-    // Clear selections when moving between main modules
     if (['tickets', 'customers', 'plans', 'employees'].includes(newView)) {
         if (newView !== 'customers') { setSelectedCustomer(null); setCustomerSearch(''); }
         if (newView !== 'plans') setSelectedPlan(null);
@@ -150,96 +152,22 @@ export const App: React.FC = () => {
     setView('tickets');
   };
 
-  // CRUD Handlers - Tickets
-  const handleCreateTicket = async (ticketData: any) => { 
-    try { 
-      await addTicket(ticketData); 
-      setView('tickets'); 
-      setSelectedTicket(null); 
-      toast.success('Ticket created successfully!'); 
-    } catch (err) { 
-      toast.error("Failed: " + getSafeErrorMessage(err)); 
-    }
-  };
-  const handleUpdateTicket = async (id: string, updates: any) => {
-    try { 
-        const updated = await editTicket(id, updates); 
-        setView('tickets'); 
-        setEditingTicket(null); 
-        if (selectedTicket && selectedTicket.id === id) setSelectedTicket(updated);
-        toast.success('Ticket updated successfully!');
-    } catch (err) { 
-      toast.error("Failed: " + getSafeErrorMessage(err)); 
-    }
-  };
-  const handleQuickUpdateTicket = async (id: string, updates: any) => {
-    try {
-        const updated = await editTicket(id, updates);
-        if (selectedTicket && selectedTicket.id === id) setSelectedTicket(updated);
-        toast.info('Ticket status updated.');
-    } catch (err) { 
-      toast.error("Failed to update ticket: " + getSafeErrorMessage(err)); 
-    }
-  };
-  const handleDeleteTicket = async (id: string) => {
-    try { 
-        await removeTicket(id); 
-        if (selectedTicket?.id === id) { 
-          setSelectedTicket(null); 
-          if (previousView) setView(previousView as any); 
-        }
-        toast.success('Ticket deleted.');
-    } catch (err) { 
-      toast.error("Failed to delete ticket."); 
-    }
-  };
-
-  // CRUD Handlers - Customers
-  const handleCreateCustomer = async (d:any) => { 
-    try { 
-      await addCustomer(d); 
-      setView('customers'); 
-      toast.success('Customer created.'); 
-    } catch(e) { 
-      toast.error(getSafeErrorMessage(e)); 
-    }
-  };
-  const handleUpdateCustomer = async (id: string, updates: Partial<Customer>) => {
-    try {
-      const updatedCustomer = await editCustomer(id, updates);
-      if (selectedCustomer && selectedCustomer.id === id) setSelectedCustomer(updatedCustomer);
-      toast.success('Customer details saved.');
-    } catch (e) { 
-      toast.error("Failed to update customer: " + getSafeErrorMessage(e)); 
-      throw e; 
-    }
-  };
-  const handleDeleteCustomer = async (id:string) => { 
-    try { 
-      await removeCustomer(id); 
-      if(selectedCustomer?.id===id) setSelectedCustomer(null); 
-      loadTickets(); // Refresh tickets as they cascade delete
-      toast.success('Customer deleted.'); 
-    } catch(e) { 
-      toast.error(getSafeErrorMessage(e)); 
-    }
-  };
-  
-  // CRUD Handlers - Plans
+  // CRUD Handlers
+  const handleCreateTicket = async (ticketData: any) => { try { await addTicket(ticketData); setView('tickets'); setSelectedTicket(null); toast.success('Ticket created successfully!'); } catch (err) { toast.error("Failed: " + getSafeErrorMessage(err)); }};
+  const handleUpdateTicket = async (id: string, updates: any) => { try { const updated = await editTicket(id, updates); setView('tickets'); setEditingTicket(null); if (selectedTicket && selectedTicket.id === id) setSelectedTicket(updated); toast.success('Ticket updated successfully!'); } catch (err) { toast.error("Failed: " + getSafeErrorMessage(err)); }};
+  const handleQuickUpdateTicket = async (id: string, updates: any) => { try { const updated = await editTicket(id, updates); if (selectedTicket && selectedTicket.id === id) setSelectedTicket(updated); toast.info('Ticket status updated.'); } catch (err) { toast.error("Failed: " + getSafeErrorMessage(err)); }};
+  const handleDeleteTicket = async (id: string) => { try { await removeTicket(id); if (selectedTicket?.id === id) { setSelectedTicket(null); if (previousView) setView(previousView as any); } toast.success('Ticket deleted.'); } catch (err) { toast.error("Failed to delete ticket."); }};
+  const handleCreateCustomer = async (d:any) => { try { await addCustomer(d); setView('customers'); toast.success('Customer created.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
+  const handleUpdateCustomer = async (id: string, updates: Partial<Customer>) => { try { const updatedCustomer = await editCustomer(id, updates); if (selectedCustomer && selectedCustomer.id === id) setSelectedCustomer(updatedCustomer); toast.success('Customer details saved.'); } catch (e) { toast.error("Failed to update customer: " + getSafeErrorMessage(e)); throw e; }};
+  const handleDeleteCustomer = async (id:string) => { try { await removeCustomer(id); if(selectedCustomer?.id===id) setSelectedCustomer(null); loadTickets(); toast.success('Customer deleted.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleCreatePlan = async (d:any) => { try { await addPlan(d); setView('plans'); toast.success('Plan created.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleDeletePlan = async (id:string) => { try { await removePlan(id); if(selectedPlan?.id===id) setSelectedPlan(null); toast.success('Plan deleted.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
-
-  // CRUD Handlers - Devices
   const handleCreateDevice = async (d:any) => { try { await addDevice(d); setView(deviceCustomerId ? 'customers' : 'network'); setDeviceCustomerId(undefined); toast.success('Device added.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleUpdateDevice = async (d:any) => { if(editingDevice) try { await editDevice(editingDevice.id, d); setView(deviceCustomerId ? 'customers' : 'network'); setEditingDevice(null); setDeviceCustomerId(undefined); toast.success('Device updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleDeleteDevice = async (id:string) => { try { await removeDevice(id); toast.success('Device removed.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
-
-  // CRUD Handlers - Employees
   const handleCreateEmployee = async (d:any) => { try { await addEmployee(d); setView('employees'); toast.success('Team member added.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleUpdateEmployee = async (d:any) => { if(editingEmployee) try { await editEmployee(editingEmployee.id, d); setView('employees'); setEditingEmployee(null); if(selectedEmployee?.id===editingEmployee.id) setSelectedEmployee({...selectedEmployee, ...d}); toast.success('Team member updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleDeleteEmployee = async (id:string) => { try { await removeEmployee(id); if(selectedEmployee?.id===id) setSelectedEmployee(null); toast.success('Team member removed.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
-
-  // CRUD Handlers - Inventory
   const handleCreateInventory = async (d:any) => { try { await addInventoryItem(d); setView('inventory'); toast.success('Item added.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleUpdateInventory = async (d:any) => { if(editingInventory) try { await editInventoryItem(editingInventory.id, d); setView('inventory'); setEditingInventory(null); toast.success('Item updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
 
@@ -269,7 +197,8 @@ export const App: React.FC = () => {
           settings: 'System Settings',
           tickets: selectedTicket ? 'Ticket Details' : 'Ticket Management', 'ticket-form': editingTicket?.id ? 'Edit Ticket' : 'New Ticket',
           employees: selectedEmployee ? 'Team Member Profile' : 'Team Management', 'employee-form': editingEmployee ? 'Edit Member' : 'New Member',
-          inventory: 'Warehouse Inventory', 'inventory-form': editingInventory ? 'Edit Item' : 'New Item'
+          inventory: 'Warehouse Inventory', 'inventory-form': editingInventory ? 'Edit Item' : 'New Item',
+          finance: 'Finance & Billing'
       };
       return titles[view] || 'Nexus ISP Manager';
   };
@@ -279,6 +208,7 @@ export const App: React.FC = () => {
     if (view === 'settings' && !hasPermission('manage_settings')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin" />;
     if ((view === 'employees' || view === 'employee-form') && !hasPermission('manage_team')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin or Manager" />;
     if ((view === 'inventory' || view === 'inventory-form') && !hasPermission('manage_network') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Tech or Admin" />;
+    if (view === 'finance' && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Finance/Admin" />;
 
     // Forms
     if (view === 'ticket-form') return <TicketForm onClose={() => setView('tickets')} onSubmit={editingTicket && editingTicket.id ? (d) => handleUpdateTicket(editingTicket.id!, d) : handleCreateTicket} initialData={editingTicket || undefined} isLoading={false} customers={customers} employees={employees} categories={categories} />;
@@ -321,6 +251,7 @@ export const App: React.FC = () => {
     switch (view) {
         case 'dashboard': return <DashboardView tickets={tickets} customers={customers} onTicketClick={handleTicketClick} onViewChange={(v) => handleViewChange(v)} />;
         case 'alerts': return <AlertsView onCreateTicket={openCreateTicketFromAlert} />;
+        case 'finance': return <FinanceView customers={customers} plans={plans} currency={currency} />;
         case 'tickets': 
           return selectedTicket 
             ? <TicketDetail 
@@ -417,7 +348,7 @@ export const App: React.FC = () => {
       if (formViews.includes(view) || globalError || selectedCustomer || selectedPlan || selectedTicket || selectedEmployee) return false;
       
       const permissionMap: Record<string, boolean> = {
-          dashboard: false, settings: false, alerts: false,
+          dashboard: false, settings: false, alerts: false, finance: false,
           employees: hasPermission('manage_team'),
           plans: hasPermission('manage_settings'),
           network: hasPermission('manage_network'),
@@ -429,38 +360,50 @@ export const App: React.FC = () => {
   };
 
   return (
-    <Layout currentView={getActiveNav()} onViewChange={(v) => handleViewChange(v as AppView)}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!view.includes('form') && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{getPageTitle()}</h1>
-              <p className="mt-1 text-sm text-gray-500">Manage your ISP operations</p>
+    <>
+      <CommandPalette 
+        onNavigate={handleViewChange}
+        actions={{
+          createTicket: () => openCreateTicket(),
+          createCustomer: openCreateCustomer,
+          createDevice: openCreateDevice,
+          createPlan: openCreatePlan,
+          logout: logout
+        }}
+      />
+      <Layout currentView={getActiveNav()} onViewChange={(v) => handleViewChange(v as AppView)}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {!view.includes('form') && (
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{getPageTitle()}</h1>
+                <p className="mt-1 text-sm text-gray-500">Manage your ISP operations</p>
+              </div>
+              {shouldShowAddButton() && (
+                <button 
+                  onClick={() => { 
+                    if (view === 'customers') openCreateCustomer(); 
+                    else if (view === 'plans') openCreatePlan(); 
+                    else if (view === 'employees') openCreateEmployee(); 
+                    else if (view === 'network') openCreateDevice(); 
+                    else if (view === 'inventory') openCreateInventory();
+                    else openCreateTicket(); 
+                  }} 
+                  className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  {view === 'customers' ? 'New Customer' : 
+                  view === 'plans' ? 'New Plan' : 
+                  view === 'employees' ? 'New Member' : 
+                  view === 'network' ? 'New Device' : 
+                  view === 'inventory' ? 'New Item' : 'New Ticket'}
+                </button>
+              )}
             </div>
-            {shouldShowAddButton() && (
-              <button 
-                onClick={() => { 
-                  if (view === 'customers') openCreateCustomer(); 
-                  else if (view === 'plans') openCreatePlan(); 
-                  else if (view === 'employees') openCreateEmployee(); 
-                  else if (view === 'network') openCreateDevice(); 
-                  else if (view === 'inventory') openCreateInventory();
-                  else openCreateTicket(); 
-                }} 
-                className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                {view === 'customers' ? 'New Customer' : 
-                 view === 'plans' ? 'New Plan' : 
-                 view === 'employees' ? 'New Member' : 
-                 view === 'network' ? 'New Device' : 
-                 view === 'inventory' ? 'New Item' : 'New Ticket'}
-              </button>
-            )}
-          </div>
-        )}
-        {renderContent()}
-      </div>
-    </Layout>
+          )}
+          {renderContent()}
+        </div>
+      </Layout>
+    </>
   );
 };
