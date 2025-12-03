@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Save, X, Edit2, Trash2, MapPin, User } from 'lucide-react';
 import { useDepartments } from '../../hooks/useDepartments';
+import { useEmployees } from '../../hooks/useEmployees';
 import { Department } from '../../types';
 import { Button } from '../ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/table';
 import { Flex } from '../ui/flex';
 import { useAuth } from '../../contexts/AuthContext';
 import { Input } from '../ui/input';
+import { Select } from '../ui/select';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { EmptyState } from '../ui/empty-state';
 import { useToast } from '../../contexts/ToastContext';
@@ -25,6 +27,7 @@ import {
 
 export const DepartmentSettings: React.FC = () => {
   const { departments, loadDepartments, addDepartment, editDepartment, removeDepartment, loading } = useDepartments();
+  const { employees, loadEmployees } = useEmployees();
   const { hasPermission } = useAuth();
   const toast = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -35,7 +38,8 @@ export const DepartmentSettings: React.FC = () => {
 
   useEffect(() => {
     loadDepartments();
-  }, [loadDepartments]);
+    loadEmployees();
+  }, [loadDepartments, loadEmployees]);
 
   const startEdit = (dept: Department) => {
     if (!canManage) return;
@@ -126,7 +130,14 @@ export const DepartmentSettings: React.FC = () => {
                           <TableCell><Input placeholder="e.g. Finance" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})}/></TableCell>
                           <TableCell><Input placeholder="Description..." value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})}/></TableCell>
                           <TableCell><Input placeholder="e.g. Floor 2" value={formData.location || ''} onChange={(e) => setFormData({...formData, location: e.target.value})}/></TableCell>
-                          <TableCell><Input placeholder="Manager Name" value={formData.manager_name || ''} onChange={(e) => setFormData({...formData, manager_name: e.target.value})}/></TableCell>
+                          <TableCell>
+                              <Select value={formData.manager_name || ''} onChange={(e) => setFormData({...formData, manager_name: e.target.value})}>
+                                  <option value="">-- Select Manager --</option>
+                                  {employees.map(emp => (
+                                      <option key={emp.id} value={emp.name}>{emp.name}</option>
+                                  ))}
+                              </Select>
+                          </TableCell>
                           <TableCell className="text-right">
                               <Flex gap={2} justify="end">
                                   <Button variant="ghost" size="icon" onClick={handleSave}><Save className="w-4 h-4 text-green-600" /></Button>
@@ -148,7 +159,12 @@ export const DepartmentSettings: React.FC = () => {
                           </TableCell>
                           <TableCell>
                               {editingId === dept.id && canManage ? 
-                                <Input value={formData.manager_name || ''} onChange={(e) => setFormData({...formData, manager_name: e.target.value})} /> : 
+                                <Select value={formData.manager_name || ''} onChange={(e) => setFormData({...formData, manager_name: e.target.value})}>
+                                    <option value="">-- Select Manager --</option>
+                                    {employees.map(emp => (
+                                        <option key={emp.id} value={emp.name}>{emp.name}</option>
+                                    ))}
+                                </Select> : 
                                 (dept.manager_name && <Flex align="center" gap={1} className="text-xs text-gray-500"><User className="w-3 h-3" />{dept.manager_name}</Flex>)
                               }
                           </TableCell>

@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { Employee } from '../types';
-import { Search, Mail, Phone, Briefcase, Trash2, Edit2, ChevronRight } from 'lucide-react';
+import { Employee, Department } from '../types';
+import { Search, Mail, Phone, Briefcase, Trash2, Edit2, ChevronRight, Filter } from 'lucide-react';
 import { RoleBadge, EmployeeStatusBadge } from './StatusBadges';
 import { Flex, FlexItem } from './ui/flex';
 import { Input } from './ui/input';
+import { Select } from './ui/select';
 import { useAuth } from '../contexts/AuthContext';
 import { EmptyState } from './ui/empty-state';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
@@ -12,25 +13,31 @@ import { Button } from './ui/button';
 
 interface EmployeeListProps {
   employees: Employee[];
+  departments?: Department[];
   onEdit: (employee: Employee) => void;
   onDelete: (id: string) => void;
   onSelect?: (employee: Employee) => void;
 }
 
-export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, onDelete, onSelect }) => {
+export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departments = [], onEdit, onDelete, onSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
   const { hasPermission } = useAuth();
 
-  const filteredEmployees = employees.filter(employee => 
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.department?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = employees.filter(employee => {
+    const matchesSearch = 
+        employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.role.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesDept = departmentFilter === 'all' || employee.department === departmentFilter;
+
+    return matchesSearch && matchesDept;
+  });
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
+      <Flex justify="between" align="center" gap={4} className="p-4 border-b border-gray-200 bg-gray-50 flex-col sm:flex-row">
         <div className="relative w-full sm:w-96">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
@@ -43,7 +50,21 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, o
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-      </div>
+        
+        {departments.length > 0 && (
+            <div className="w-full sm:w-48">
+                <Select 
+                    value={departmentFilter} 
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                >
+                    <option value="all">All Departments</option>
+                    {departments.map(dept => (
+                        <option key={dept.id} value={dept.name}>{dept.name}</option>
+                    ))}
+                </Select>
+            </div>
+        )}
+      </Flex>
 
       {filteredEmployees.length > 0 ? (
         <ul className="divide-y divide-gray-100">
@@ -137,7 +158,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, o
             <EmptyState 
                 icon={Briefcase}
                 title="No team members found"
-                message={employees.length === 0 ? "Add a new member to your team to get started." : "No members found matching your search."}
+                message={employees.length === 0 ? "Add a new member to your team to get started." : `No members found matching "${searchTerm}".`}
             />
         </div>
       )}
