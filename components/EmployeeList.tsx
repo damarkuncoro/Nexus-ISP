@@ -24,12 +24,12 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const { hasPermission } = useAuth();
 
-  const filteredEmployees = employees.filter(employee => {
-    const matchesSearch = 
+  const filteredEmployees = (employees || []).filter(employee => {
+    const matchesSearch =
         employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         employee.role.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesDept = departmentFilter === 'all' || employee.department === departmentFilter;
 
     return matchesSearch && matchesDept;
@@ -158,7 +158,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
             <EmptyState 
                 icon={Briefcase}
                 title="No team members found"
-                message={employees.length === 0 ? "Add a new member to your team to get started." : `No members found matching "${searchTerm}".`}
+                message={(employees || []).length === 0 ? "Add a new member to your team to get started." : `No members found matching "${searchTerm}".`}
             />
         </div>
       )}
