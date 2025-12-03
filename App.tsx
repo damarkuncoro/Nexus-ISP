@@ -345,9 +345,11 @@ const renderContent = () => {
       return selectedEmployee ? (
         <EmployeeDetail
           employee={selectedEmployee}
+          assignedTickets={tickets.filter(t => t.assigned_to === selectedEmployee.id)}
           onBack={() => setSelectedEmployee(null)}
           onEdit={openEditEmployee}
           onDelete={handleDeleteEmployee}
+          onTicketClick={handleTicketClick}
         />
       ) : (
         <EmployeeList
