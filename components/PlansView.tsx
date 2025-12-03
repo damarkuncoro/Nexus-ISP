@@ -17,14 +17,14 @@ interface PlansViewProps {
 export const PlansView: React.FC<PlansViewProps> = ({ plans, customers, onSelectPlan, currency }) => {
   
   const getPlanStats = (planId: string) => {
-    const planCustomers = customers.filter(c => c.plan_id === planId);
+    const planCustomers = (customers || []).filter(c => c.plan_id === planId);
     return {
       count: planCustomers.length,
       revenue: planCustomers.length * (plans.find(p => p.id === planId)?.price || 0)
     };
   };
 
-  const totalRevenue = customers.reduce((sum, customer) => {
+  const totalRevenue = (customers || []).reduce((sum, customer) => {
     const plan = plans.find(p => p.id === customer.plan_id);
     return sum + (plan?.price || 0);
   }, 0);
@@ -38,7 +38,7 @@ export const PlansView: React.FC<PlansViewProps> = ({ plans, customers, onSelect
            <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600"><Wifi className="w-6 h-6" /></div>
         </Flex>
         <Flex justify="between" align="center" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-           <div><p className="text-sm font-medium text-gray-500">Total Subscribed Users</p><p className="text-3xl font-bold text-gray-900 mt-1">{customers.filter(c => c.plan_id).length}<span className="text-sm font-normal text-gray-400 ml-2">/ {customers.length} total</span></p></div>
+           <div><p className="text-sm font-medium text-gray-500">Total Subscribed Users</p><p className="text-3xl font-bold text-gray-900 mt-1">{(customers || []).filter(c => c.plan_id).length}<span className="text-sm font-normal text-gray-400 ml-2">/ {(customers || []).length} total</span></p></div>
            <div className="p-3 bg-blue-50 rounded-lg text-blue-600"><Users className="w-6 h-6" /></div>
         </Flex>
         <Flex justify="between" align="center" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

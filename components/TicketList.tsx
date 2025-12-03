@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Ticket, TicketStatus, TicketPriority } from '../types';
+import { Ticket, TicketStatus, TicketPriority, Customer } from '../types';
 import { Search, Filter, MoreHorizontal, User, ChevronRight, AlertTriangle, LayoutList, Kanban, Calendar, Clock } from 'lucide-react';
 import { TicketStatusBadge, TicketPriorityBadge, TicketCategoryBadge } from './StatusBadges';
 import { Card } from './ui/card';
@@ -12,14 +12,18 @@ import { EmptyState } from './ui/empty-state';
 
 interface TicketListProps {
   tickets: Ticket[];
-  onEdit: (ticket: Ticket) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (ticket: Ticket) => void;
+  onDelete?: (id: string) => void;
   onCustomerClick?: (customerId: string) => void;
   onTicketClick?: (ticket: Ticket) => void;
+  onCreateTicket?: () => void;
+  onUpdateTicket?: (id: string, updates: any) => void;
+  onDeleteTicket?: (id: string) => void;
+  customers?: Customer[];
   compact?: boolean;
 }
 
-export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelete, onCustomerClick, onTicketClick, compact = false }) => {
+export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelete, onCustomerClick, onTicketClick, onCreateTicket, onUpdateTicket, onDeleteTicket, customers, compact = false }) => {
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | 'all'>('all');
@@ -55,7 +59,7 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelet
                     )}
                 </Flex>
                 {viewMode === 'board' && (
-                    <button onClick={(e) => { e.stopPropagation(); onEdit(ticket); }} className="text-gray-400 hover:text-gray-600">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit && onEdit(ticket); }} className="text-gray-400 hover:text-gray-600">
                         <MoreHorizontal className="w-4 h-4" />
                     </button>
                 )}
@@ -105,6 +109,7 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelet
             icon={Filter}
             title="No tickets found"
             message="Get started by creating a new ticket."
+            action={onCreateTicket ? { label: 'Create Ticket', onClick: onCreateTicket } : undefined}
         />
     );
   }
@@ -217,14 +222,14 @@ export const TicketList: React.FC<TicketListProps> = ({ tickets, onEdit, onDelet
               {!compact && (
                 <Flex align="center" gap={2}>
                   <Flex align="center" gap={2} className="hidden group-hover:flex transition-opacity">
-                      <button onClick={(e) => { e.stopPropagation(); onEdit(ticket); }} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Edit"><MoreHorizontal className="w-5 h-5" /></button>
+                      <button onClick={(e) => { e.stopPropagation(); onEdit && onEdit(ticket); }} className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Edit"><MoreHorizontal className="w-5 h-5" /></button>
                   </Flex>
                   {onTicketClick && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400" />}
                 </Flex>
               )}
               {compact && (
                  <Flex align="center">
-                    <button onClick={(e) => { e.stopPropagation(); onEdit(ticket); }} className="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); onEdit && onEdit(ticket); }} className="ml-2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"><MoreHorizontal className="w-4 h-4" /></button>
                     {onTicketClick && <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400 ml-1" />}
                  </Flex>
               )}

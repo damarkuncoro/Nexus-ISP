@@ -49,6 +49,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
   }, [tickets]);
 
   const ticketVolumeData = useMemo(() => {
+    if (!tickets) return [];
     const last7Days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -63,6 +64,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
   }, [tickets]);
 
   const categoryDistributionData = useMemo(() => {
+      if (!tickets || tickets.length === 0) return [];
       const categoryCounts = tickets.reduce((acc, ticket) => {
           const categoryName = ticket.category ? ticket.category.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : 'Other';
           acc[categoryName] = (acc[categoryName] || 0) + 1;
