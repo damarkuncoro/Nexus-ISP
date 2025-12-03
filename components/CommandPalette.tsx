@@ -1,11 +1,12 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Search, Ticket as TicketIcon, LayoutDashboard, Server, Users, Wifi, Settings, 
-  CreditCard, Package, LogOut, Bell, UserPlus, HardHat, FileText
+  CreditCard, Package, LogOut, Bell, UserPlus, FileText, User
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
+import { Customer, Ticket } from '../types';
 
 interface CommandPaletteProps {
   onNavigate: (view: any) => void;
@@ -16,27 +17,39 @@ interface CommandPaletteProps {
     createPlan: () => void;
     logout: () => void;
   };
+  customers?: Customer[];
+  tickets?: Ticket[];
+  onSelectCustomer?: (customerId: string) => void;
+  onSelectTicket?: (ticket: Ticket) => void;
 }
 
 interface CommandItem {
   id: string;
   label: string;
+  description?: string;
   icon: any;
-  group: 'Navigation' | 'Actions' | 'System';
+  group: string;
   action: () => void;
   shortcut?: string;
   role?: string;
 }
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate, actions }) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({ 
+  onNavigate, 
+  actions, 
+  customers = [], 
+  tickets = [],
+  onSelectCustomer,
+  onSelectTicket
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { hasPermission, logout } = useAuth();
+  const { hasPermission } = useAuth();
 
-  // Define all available commands
-  const allCommands: CommandItem[] = [
+  // Define static commands
+  const staticCommands: CommandItem[] = useMemo(() => [
     // Navigation
     { id: 'nav-dash', label: 'Go to Dashboard', icon: LayoutDashboard, group: 'Navigation', action: () => onNavigate('dashboard') },
     { id: 'nav-alerts', label: 'Go to NOC Alerts', icon: Bell, group: 'Navigation', action: () => onNavigate('alerts') },
@@ -55,14 +68,53 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate, acti
     
     // System
     { id: 'sys-logout', label: 'Log Out', icon: LogOut, group: 'System', action: () => { actions.logout(); }, shortcut: 'Alt Q' }
-  ];
+  ], [onNavigate, actions, hasPermission]);
 
-  // Filter commands based on query and permissions
-  const filteredCommands = allCommands.filter(cmd => {
-    const matchesSearch = cmd.label.toLowerCase().includes(query.toLowerCase());
-    const matchesRole = !cmd.role || hasPermission(cmd.role as any);
-    return matchesSearch && matchesRole;
-  });
+  const filteredCommands = useMemo(() => {
+    // 1. Filter static commands
+    const staticMatches = staticCommands.filter(cmd => {
+      const matchesSearch = cmd.label.toLowerCase().includes(query.toLowerCase());
+      const matchesRole = !cmd.role || hasPermission(cmd.role as any);
+      return matchesSearch && matchesRole;
+    });
+
+    if (!query) return staticMatches;
+
+    // 2. Search Customers (limit 3)
+    const customerMatches: CommandItem[] = customers
+        .filter(c => 
+            c.name.toLowerCase().includes(query.toLowerCase()) || 
+            c.email.toLowerCase().includes(query.toLowerCase()) ||
+            c.company?.toLowerCase().includes(query.toLowerCase())
+        )
+        .slice(0, 3)
+        .map(c => ({
+            id: `cust-${c.id}`,
+            label: c.name,
+            description: c.email,
+            icon: User,
+            group: 'Subscribers',
+            action: () => onSelectCustomer && onSelectCustomer(c.id)
+        }));
+
+    // 3. Search Tickets (limit 3)
+    const ticketMatches: CommandItem[] = tickets
+        .filter(t => 
+            t.title.toLowerCase().includes(query.toLowerCase()) ||
+            t.id.includes(query.toLowerCase())
+        )
+        .slice(0, 3)
+        .map(t => ({
+            id: `tick-${t.id}`,
+            label: t.title,
+            description: `#${t.id.slice(0,8)} • ${t.status.replace('_', ' ')}`,
+            icon: FileText,
+            group: 'Tickets',
+            action: () => onSelectTicket && onSelectTicket(t)
+        }));
+
+    return [...staticMatches, ...customerMatches, ...ticketMatches];
+  }, [query, customers, tickets, hasPermission, staticCommands, onSelectCustomer, onSelectTicket]);
 
   // Toggle Open/Close
   useEffect(() => {
@@ -76,7 +128,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate, acti
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Navigation Logic within Palette
+  // Navigation Logic
   useEffect(() => {
     const handleNavigation = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -110,10 +162,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate, acti
     setQuery('');
   };
 
+  // Group commands for rendering
+  const groupedCommands = useMemo(() => {
+      const groups: Record<string, CommandItem[]> = {};
+      filteredCommands.forEach(cmd => {
+          if (!groups[cmd.group]) groups[cmd.group] = [];
+          groups[cmd.group].push(cmd);
+      });
+      // Sort groups logic if needed, but iteration order usually preserves insertion order
+      return groups;
+  }, [filteredCommands]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]">
       <div 
         className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
         onClick={() => setIsOpen(false)}
@@ -127,7 +190,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate, acti
             autoFocus
             type="text"
             className="w-full py-4 text-base bg-transparent border-none outline-none placeholder:text-gray-400 text-gray-900"
-            placeholder="Type a command or search..."
+            placeholder="Type a command, customer name, or ticket ID..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -141,16 +204,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate, acti
             </div>
           ) : (
             <div className="space-y-1">
-              {['Navigation', 'Actions', 'System'].map(group => {
-                const groupItems = filteredCommands.filter(c => c.group === group);
-                if (groupItems.length === 0) return null;
-
-                return (
+              {Object.entries(groupedCommands).map(([group, items]) => (
                   <div key={group}>
                     <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50">
                       {group}
                     </div>
-                    {groupItems.map((item) => {
+                    {items.map((item) => {
                       const isActive = filteredCommands.indexOf(item) === selectedIndex;
                       const Icon = item.icon;
                       
@@ -164,19 +223,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onNavigate, acti
                             isActive ? "bg-primary-50 text-primary-900" : "text-gray-700 hover:bg-gray-50"
                           )}
                         >
-                          <div className="flex items-center gap-3">
-                            <Icon className={cn("w-5 h-5", isActive ? "text-primary-600" : "text-gray-400")} />
-                            <span className={cn("text-sm", isActive && "font-medium")}>{item.label}</span>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-primary-600" : "text-gray-400")} />
+                            <div className="flex flex-col min-w-0">
+                                <span className={cn("text-sm truncate", isActive && "font-medium")}>{item.label}</span>
+                                {item.description && <span className={cn("text-xs truncate", isActive ? "text-primary-600/70" : "text-gray-400")}>{item.description}</span>}
+                            </div>
                           </div>
                           {item.shortcut && (
-                            <span className="text-xs text-gray-400 font-mono tracking-wider">{item.shortcut}</span>
+                            <span className="text-xs text-gray-400 font-mono tracking-wider ml-4">{item.shortcut}</span>
                           )}
                         </button>
                       );
                     })}
                   </div>
-                );
-              })}
+              ))}
             </div>
           )}
         </div>

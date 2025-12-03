@@ -370,6 +370,10 @@ export const App: React.FC = () => {
           createPlan: openCreatePlan,
           logout: logout
         }}
+        customers={customers}
+        tickets={tickets}
+        onSelectCustomer={handleCustomerClick}
+        onSelectTicket={handleTicketClick}
       />
       <Layout currentView={getActiveNav()} onViewChange={(v) => handleViewChange(v as AppView)}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
