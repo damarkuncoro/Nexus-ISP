@@ -1,20 +1,21 @@
-import React, { useMemo } from 'react';
+
+import React, { useMemo, useEffect } from 'react';
 import { Ticket, Customer, TicketStatus } from '../types';
-// FIX: Import `Legend` from recharts.
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Ticket as TicketIcon, AlertCircle, AlertTriangle, UserX, BarChart2, PieChart as PieChartIcon, Activity } from 'lucide-react';
+import { Ticket as TicketIcon, AlertCircle, AlertTriangle, UserX, BarChart2, PieChart as PieChartIcon, Activity, Package } from 'lucide-react';
 import { Grid } from './ui/grid';
 import { Flex } from './ui/flex';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Table, TableBody, TableRow, TableCell } from './ui/table';
 import { TicketStatusBadge } from './StatusBadges';
 import { Button } from './ui/button';
+import { useInventory } from '../hooks/useInventory';
 
 interface DashboardViewProps {
   tickets: Ticket[];
   customers: Customer[];
   onTicketClick: (ticket: Ticket) => void;
-  onViewChange: (view: 'tickets') => void;
+  onViewChange: (view: 'tickets' | 'inventory') => void;
 }
 
 const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }: { title: string, value: number | string, icon: React.ElementType, colorClass: string, bgClass: string }) => (
@@ -34,6 +35,11 @@ const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }: { title: st
 );
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers, onTicketClick, onViewChange }) => {
+  const { items: inventoryItems, loadInventory } = useInventory();
+
+  useEffect(() => {
+      loadInventory();
+  }, [loadInventory]);
   
   const stats = useMemo(() => {
     if (!tickets) {
@@ -47,6 +53,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
       total: tickets.length,
     };
   }, [tickets]);
+
+  const lowStockItems = useMemo(() => {
+      return inventoryItems.filter(i => i.quantity <= i.min_quantity).slice(0, 3);
+  }, [inventoryItems]);
 
   const ticketVolumeData = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -122,28 +132,60 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
             </Card>
         </Grid>
 
-        <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
-                <CardTitle className="flex items-center gap-2 text-base"><Activity className="w-5 h-5 text-gray-500" />Recent Activity</CardTitle>
-                <Button variant="link" size="sm" onClick={() => onViewChange('tickets')}>View All</Button>
-            </CardHeader>
-            <CardContent className="p-0">
-                <Table>
-                    <TableBody>
-                        {recentTickets.map(ticket => (
-                            <TableRow key={ticket.id} onClick={() => onTicketClick(ticket)} className="cursor-pointer">
-                                <TableCell>
-                                    <p className="font-medium text-gray-900">{ticket.title}</p>
-                                    <p className="text-xs text-gray-500">#{ticket.id.slice(0,8)} • {ticket.customer?.name || 'No Customer'}</p>
-                                </TableCell>
-                                <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
-                                <TableCell className="hidden md:table-cell text-right text-gray-500 text-xs">{new Date(ticket.created_at).toLocaleString()}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+        <Grid cols={1} className="lg:grid-cols-2" gap={6}>
+            <Card>
+                <CardHeader className="flex flex-row justify-between items-center">
+                    <CardTitle className="flex items-center gap-2 text-base"><Activity className="w-5 h-5 text-gray-500" />Recent Activity</CardTitle>
+                    <Button variant="link" size="sm" onClick={() => onViewChange('tickets')}>View All</Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableBody>
+                            {recentTickets.map(ticket => (
+                                <TableRow key={ticket.id} onClick={() => onTicketClick(ticket)} className="cursor-pointer">
+                                    <TableCell>
+                                        <p className="font-medium text-gray-900">{ticket.title}</p>
+                                        <p className="text-xs text-gray-500">#{ticket.id.slice(0,8)} • {ticket.customer?.name || 'No Customer'}</p>
+                                    </TableCell>
+                                    <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
+                                    <TableCell className="hidden md:table-cell text-right text-gray-500 text-xs">{new Date(ticket.created_at).toLocaleString()}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-amber-400">
+                <CardHeader className="flex flex-row justify-between items-center pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base text-amber-900"><Package className="w-5 h-5 text-amber-600" />Low Stock Alerts</CardTitle>
+                    <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-900 hover:bg-amber-50" onClick={() => onViewChange('inventory')}>Manage</Button>
+                </CardHeader>
+                <CardContent>
+                    {lowStockItems.length > 0 ? (
+                        <div className="space-y-3">
+                            {lowStockItems.map(item => (
+                                <Flex key={item.id} justify="between" align="center" className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                                    <div>
+                                        <p className="font-medium text-amber-900 text-sm">{item.name}</p>
+                                        <p className="text-xs text-amber-700">SKU: {item.sku}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-lg font-bold text-amber-800">{item.quantity} <span className="text-xs font-normal">{item.unit}</span></p>
+                                        <p className="text-[10px] text-amber-600">Min: {item.min_quantity}</p>
+                                    </div>
+                                </Flex>
+                            ))}
+                        </div>
+                    ) : (
+                        <Flex direction="col" align="center" justify="center" className="h-40 text-gray-400">
+                            <Package className="w-10 h-10 mb-2 opacity-20" />
+                            <p className="text-sm">Stock levels are healthy.</p>
+                        </Flex>
+                    )}
+                </CardContent>
+            </Card>
+        </Grid>
     </div>
   );
 };

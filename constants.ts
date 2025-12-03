@@ -22,6 +22,8 @@ DROP TABLE IF EXISTS public.employees CASCADE;
 DROP TABLE IF EXISTS public.ticket_categories CASCADE;
 DROP TABLE IF EXISTS public.system_settings CASCADE;
 DROP TABLE IF EXISTS public.departments CASCADE;
+DROP TABLE IF EXISTS public.inventory_items CASCADE;
+DROP TABLE IF EXISTS public.network_alerts CASCADE;
 
 -- 1. Create Plans Table
 create table public.plans (
@@ -171,7 +173,7 @@ create table public.employees (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 11. Create System Settings Table (Key-Value Store)
+-- 11. Create System Settings Table
 create table public.system_settings (
   key text primary key,
   value text not null,
@@ -179,7 +181,33 @@ create table public.system_settings (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 12. Create Audit Logs Table
+-- 12. Create Inventory Items Table
+create table public.inventory_items (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  sku text not null,
+  category text not null,
+  quantity int default 0 not null,
+  unit text default 'pcs',
+  min_quantity int default 5,
+  cost_price numeric default 0,
+  location text,
+  description text,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 13. Create Network Alerts Table
+create table public.network_alerts (
+  id uuid default gen_random_uuid() primary key,
+  device_name text not null,
+  severity text not null check (severity in ('critical', 'warning', 'info')),
+  message text not null,
+  source text,
+  timestamp timestamp with time zone default timezone('utc'::text, now()) not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 14. Create Audit Logs Table
 create table public.audit_logs (
   id uuid default gen_random_uuid() primary key,
   action text not null,
@@ -190,7 +218,7 @@ create table public.audit_logs (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 13. Create Indexes (Optimization)
+-- 15. Create Indexes
 create index tickets_customer_id_idx on public.tickets(customer_id);
 create index customers_plan_id_idx on public.customers(plan_id);
 create index invoices_customer_id_idx on public.invoices(customer_id);
@@ -198,8 +226,10 @@ create index payment_methods_customer_id_idx on public.payment_methods(customer_
 create index ticket_comments_ticket_id_idx on public.ticket_comments(ticket_id);
 create index network_devices_customer_id_idx on public.network_devices(customer_id);
 create index audit_logs_created_at_idx on public.audit_logs(created_at);
+create index inventory_sku_idx on public.inventory_items(sku);
+create index network_alerts_timestamp_idx on public.network_alerts(timestamp);
 
--- 14. Enable Row Level Security (RLS)
+-- 16. Enable RLS
 alter table public.customers enable row level security;
 alter table public.tickets enable row level security;
 alter table public.plans enable row level security;
@@ -211,9 +241,11 @@ alter table public.employees enable row level security;
 alter table public.ticket_categories enable row level security;
 alter table public.system_settings enable row level security;
 alter table public.departments enable row level security;
+alter table public.inventory_items enable row level security;
+alter table public.network_alerts enable row level security;
 alter table public.audit_logs enable row level security;
 
--- 15. Create Public Access Policies (for demo)
+-- 17. Create Policies
 create policy "Public Access Customers" on public.customers for all using (true);
 create policy "Public Access Tickets" on public.tickets for all using (true);
 create policy "Public Access Plans" on public.plans for all using (true);
@@ -225,9 +257,11 @@ create policy "Public Access Employees" on public.employees for all using (true)
 create policy "Public Access Categories" on public.ticket_categories for all using (true);
 create policy "Public Access Settings" on public.system_settings for all using (true);
 create policy "Public Access Departments" on public.departments for all using (true);
+create policy "Public Access Inventory" on public.inventory_items for all using (true);
+create policy "Public Access Alerts" on public.network_alerts for all using (true);
 create policy "Public Access Audit" on public.audit_logs for all using (true);
 
--- 16. Seed Default Data
+-- 18. Seed Data
 insert into public.plans (name, price, download_speed, upload_speed) values 
 ('Home Fiber Starter', 29.99, '50 Mbps', '10 Mbps'),
 ('Home Fiber Plus', 49.99, '100 Mbps', '50 Mbps'),
@@ -252,6 +286,18 @@ insert into public.departments (name, description, location, manager_name) value
 
 insert into public.system_settings (key, value, description) values
 ('currency', 'USD', 'Default currency code for the application');
+
+insert into public.inventory_items (name, sku, category, quantity, unit, min_quantity, cost_price, location) values
+('ONU/ONT Huawei HG8245H', 'DEV-ONU-001', 'Device', 45, 'pcs', 10, 35.00, 'Warehouse A - Shelf 2'),
+('Fiber Drop Cable 1 Core', 'CBL-DROP-1C', 'Cable', 2500, 'meters', 500, 0.15, 'Warehouse B - Rack 1'),
+('Fiber Patch Cord SC-UPC 3m', 'ACC-PC-SC-3M', 'Accessory', 120, 'pcs', 20, 2.50, 'Warehouse A - Bin 4'),
+('MikroTik RB750Gr3', 'DEV-RTR-750', 'Device', 12, 'pcs', 5, 55.00, 'Warehouse A - Secure 1'),
+('Splicing Protection Sleeve', 'ACC-SPL-SLV', 'Accessory', 500, 'pcs', 100, 0.05, 'Technician Van 1');
+
+insert into public.network_alerts (device_name, severity, message, source, timestamp) values
+('Core-Router-01', 'critical', 'High CPU Usage (98%)', 'Zabbix', now()),
+('OLT-North-District', 'warning', 'PON Port 3 Signal Low', 'Huawei NCE', now() - interval '1 hour'),
+('Distribution-Switch-B', 'info', 'Configuration Saved', 'Syslog', now() - interval '2 hours');
 
 insert into public.audit_logs (action, entity, details, performed_by) values
 ('system', 'System', 'System initialized with default data', 'System')`;

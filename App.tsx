@@ -16,10 +16,12 @@ import { DeviceForm } from './components/forms/DeviceForm';
 import { EmployeeList } from './components/EmployeeList';
 import { EmployeeForm } from './components/forms/EmployeeForm';
 import { EmployeeDetail } from './components/EmployeeDetail';
+import { InventoryView } from './components/InventoryView';
+import { InventoryForm } from './components/forms/InventoryForm';
 import { SettingsView } from './components/SettingsView';
 import { AlertsView } from './components/AlertsView';
 import { AccessDenied } from './components/AccessDenied';
-import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee } from './types';
+import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem } from './types';
 import { Plus, Loader2 } from 'lucide-react';
 import { SETUP_SQL } from './constants';
 import { useTickets } from './hooks/useTickets';
@@ -30,6 +32,7 @@ import { useEmployees } from './hooks/useEmployees';
 import { useCategories } from './hooks/useCategories';
 import { useSettings } from './hooks/useSettings';
 import { useDepartments } from './hooks/useDepartments';
+import { useInventory } from './hooks/useInventory';
 import { useAuth } from './contexts/AuthContext';
 import { useToast } from './contexts/ToastContext';
 import { getSafeErrorMessage, isSetupError } from './utils/errorHelpers';
@@ -42,7 +45,8 @@ type AppView =
   | 'network' | 'device-form'
   | 'settings' 
   | 'employees' | 'employee-form'
-  | 'alerts';
+  | 'alerts'
+  | 'inventory' | 'inventory-form';
 
 export const App: React.FC = () => {
   const [view, setView] = useState<AppView>('dashboard');
@@ -58,6 +62,7 @@ export const App: React.FC = () => {
   const { employees, loading: employeesLoading, loadEmployees, addEmployee, editEmployee, removeEmployee } = useEmployees();
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
   const { departments, loading: departmentsLoading, loadDepartments } = useDepartments();
+  const { items: inventoryItems, addItem: addInventoryItem, editItem: editInventoryItem } = useInventory(); // Hooks instantiated here but loaded in View
 
   const loading = ticketsLoading || customersLoading || plansLoading || devicesLoading || employeesLoading || categoriesLoading || departmentsLoading || settingsLoading;
   const globalError = ticketsError || customersError;
@@ -67,6 +72,7 @@ export const App: React.FC = () => {
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
   const [editingDevice, setEditingDevice] = useState<NetworkDevice | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [editingInventory, setEditingInventory] = useState<InventoryItem | null>(null);
   const [deviceCustomerId, setDeviceCustomerId] = useState<string | undefined>(undefined);
   
   const [copied, setCopied] = useState(false);
@@ -121,7 +127,8 @@ export const App: React.FC = () => {
         'customer-form': 'customers', 
         'plan-form': 'plans', 
         'device-form': 'network', 
-        'employee-form': 'employees' 
+        'employee-form': 'employees',
+        'inventory-form': 'inventory'
       };
       return formMap[view] || view;
   };
@@ -232,6 +239,10 @@ export const App: React.FC = () => {
   const handleUpdateEmployee = async (d:any) => { if(editingEmployee) try { await editEmployee(editingEmployee.id, d); setView('employees'); setEditingEmployee(null); if(selectedEmployee?.id===editingEmployee.id) setSelectedEmployee({...selectedEmployee, ...d}); toast.success('Team member updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleDeleteEmployee = async (id:string) => { try { await removeEmployee(id); if(selectedEmployee?.id===id) setSelectedEmployee(null); toast.success('Team member removed.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
 
+  // CRUD Handlers - Inventory
+  const handleCreateInventory = async (d:any) => { try { await addInventoryItem(d); setView('inventory'); toast.success('Item added.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
+  const handleUpdateInventory = async (d:any) => { if(editingInventory) try { await editInventoryItem(editingInventory.id, d); setView('inventory'); setEditingInventory(null); toast.success('Item updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
+
   const handleCopySQL = () => { navigator.clipboard.writeText(SETUP_SQL); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   // View Transitions
@@ -246,6 +257,8 @@ export const App: React.FC = () => {
   const openCustomerDeviceForm = (customerId: string, device?: NetworkDevice) => { setDeviceCustomerId(customerId); setEditingDevice(device || null); setView('device-form'); };
   const openCreateEmployee = () => { setEditingEmployee(null); setView('employee-form'); };
   const openEditEmployee = (emp: Employee) => { setEditingEmployee(emp); setView('employee-form'); };
+  const openCreateInventory = () => { setEditingInventory(null); setView('inventory-form'); };
+  const openEditInventory = (item: InventoryItem) => { setEditingInventory(item); setView('inventory-form'); };
 
   const getPageTitle = () => {
       const titles: Record<string, string> = {
@@ -256,6 +269,7 @@ export const App: React.FC = () => {
           settings: 'System Settings',
           tickets: selectedTicket ? 'Ticket Details' : 'Ticket Management', 'ticket-form': editingTicket?.id ? 'Edit Ticket' : 'New Ticket',
           employees: selectedEmployee ? 'Team Member Profile' : 'Team Management', 'employee-form': editingEmployee ? 'Edit Member' : 'New Member',
+          inventory: 'Warehouse Inventory', 'inventory-form': editingInventory ? 'Edit Item' : 'New Item'
       };
       return titles[view] || 'Nexus ISP Manager';
   };
@@ -264,6 +278,7 @@ export const App: React.FC = () => {
     // Permission Checks
     if (view === 'settings' && !hasPermission('manage_settings')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin" />;
     if ((view === 'employees' || view === 'employee-form') && !hasPermission('manage_team')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin or Manager" />;
+    if ((view === 'inventory' || view === 'inventory-form') && !hasPermission('manage_network') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Tech or Admin" />;
 
     // Forms
     if (view === 'ticket-form') return <TicketForm onClose={() => setView('tickets')} onSubmit={editingTicket && editingTicket.id ? (d) => handleUpdateTicket(editingTicket.id!, d) : handleCreateTicket} initialData={editingTicket || undefined} isLoading={false} customers={customers} employees={employees} categories={categories} />;
@@ -271,6 +286,7 @@ export const App: React.FC = () => {
     if (view === 'plan-form') return <PlanForm onClose={() => setView('plans')} onSubmit={handleCreatePlan} initialData={editingPlan || undefined} currency={currency} />;
     if (view === 'device-form') return <DeviceForm onClose={() => setView(deviceCustomerId ? 'customers' : 'network')} onSubmit={editingDevice ? handleUpdateDevice : handleCreateDevice} initialData={editingDevice || undefined} customerId={deviceCustomerId} />;
     if (view === 'employee-form') return <EmployeeForm onClose={() => setView('employees')} onSubmit={editingEmployee ? handleUpdateEmployee : handleCreateEmployee} initialData={editingEmployee || undefined} departments={departments} />;
+    if (view === 'inventory-form') return <InventoryForm onClose={() => setView('inventory')} onSubmit={editingInventory ? handleUpdateInventory : handleCreateInventory} initialData={editingInventory || undefined} />;
     
     // Settings
     if (view === 'settings') return <SettingsView connectionStatus={globalError ? 'error' : 'connected'} currency={currency} onCurrencyChange={saveCurrency} />;
@@ -390,12 +406,14 @@ export const App: React.FC = () => {
                 onDelete={handleDeleteEmployee} 
                 onSelect={setSelectedEmployee} 
               />;
+        case 'inventory':
+          return <InventoryView onAddItem={openCreateInventory} onEditItem={openEditInventory} currency={currency} />;
         default: return null;
     }
   };
 
   const shouldShowAddButton = () => {
-      const formViews = ['ticket-form', 'customer-form', 'plan-form', 'device-form', 'employee-form'];
+      const formViews = ['ticket-form', 'customer-form', 'plan-form', 'device-form', 'employee-form', 'inventory-form'];
       if (formViews.includes(view) || globalError || selectedCustomer || selectedPlan || selectedTicket || selectedEmployee) return false;
       
       const permissionMap: Record<string, boolean> = {
@@ -403,6 +421,7 @@ export const App: React.FC = () => {
           employees: hasPermission('manage_team'),
           plans: hasPermission('manage_settings'),
           network: hasPermission('manage_network'),
+          inventory: hasPermission('manage_network'),
       };
       if (permissionMap[view] === false) return false;
       
@@ -425,6 +444,7 @@ export const App: React.FC = () => {
                   else if (view === 'plans') openCreatePlan(); 
                   else if (view === 'employees') openCreateEmployee(); 
                   else if (view === 'network') openCreateDevice(); 
+                  else if (view === 'inventory') openCreateInventory();
                   else openCreateTicket(); 
                 }} 
                 className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm"
@@ -433,7 +453,8 @@ export const App: React.FC = () => {
                 {view === 'customers' ? 'New Customer' : 
                  view === 'plans' ? 'New Plan' : 
                  view === 'employees' ? 'New Member' : 
-                 view === 'network' ? 'New Device' : 'New Ticket'}
+                 view === 'network' ? 'New Device' : 
+                 view === 'inventory' ? 'New Item' : 'New Ticket'}
               </button>
             )}
           </div>

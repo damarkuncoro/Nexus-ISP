@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield } from 'lucide-react';
+import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield, Package } from 'lucide-react';
 import { APP_NAME } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { EmployeeRole } from '../types';
@@ -8,8 +8,8 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentView: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts';
-  onViewChange: (view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts') => void;
+  currentView: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory';
+  onViewChange: (view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory') => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewChange }) => {
@@ -18,10 +18,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   
   const { currentUser, loginAs, hasPermission } = useAuth();
 
-  const NavItem = ({ view, icon: Icon, label, protectedRole }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts', icon: any, label: string, protectedRole?: boolean }) => {
+  const NavItem = ({ view, icon: Icon, label }: { view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory', icon: any, label: string }) => {
     // Basic protection logic for sidebar visibility
     if (view === 'settings' && !hasPermission('manage_settings')) return null;
     if (view === 'employees' && !hasPermission('manage_team')) return null;
+    if (view === 'inventory' && !hasPermission('manage_network') && !hasPermission('view_billing')) return null;
     
     return (
       <button
@@ -44,9 +45,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   const handleRoleSwitch = (role: EmployeeRole) => {
     loginAs(role);
     setIsProfileMenuOpen(false);
-    // If user is on a restricted page and switches to a role that can't see it, 
-    // App.tsx handles the access denied, or we can redirect here:
-    if (role === EmployeeRole.SUPPORT && (currentView === 'settings' || currentView === 'employees' || currentView === 'network')) {
+    if (role === EmployeeRole.SUPPORT && (currentView === 'settings' || currentView === 'employees' || currentView === 'network' || currentView === 'inventory')) {
         onViewChange('dashboard');
     }
   };
@@ -80,6 +79,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           <NavItem view="customers" icon={Users} label="Subscribers" />
           <NavItem view="plans" icon={Wifi} label="Service Plans" />
           <NavItem view="network" icon={Server} label="Network Devices" />
+          <NavItem view="inventory" icon={Package} label="Warehouse" />
           <NavItem view="employees" icon={Briefcase} label="Team" />
         </div>
 
@@ -112,6 +112,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
                <NavItem view="customers" icon={Users} label="Subscribers" />
                <NavItem view="plans" icon={Wifi} label="Service Plans" />
                <NavItem view="network" icon={Server} label="Network Devices" />
+               <NavItem view="inventory" icon={Package} label="Warehouse" />
                <NavItem view="employees" icon={Briefcase} label="Team" />
                <div className="border-t border-gray-100 my-2 pt-2">
                  <NavItem view="settings" icon={Settings} label="Settings" />

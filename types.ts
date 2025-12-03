@@ -218,6 +218,20 @@ export interface NetworkDevice {
   pppoe_username?: string;
 }
 
+export interface InventoryItem {
+  id: string;
+  name: string;
+  sku: string;
+  category: string; // Device, Cable, Accessory, Tool
+  quantity: number;
+  unit: string; // pcs, meters, box
+  min_quantity: number;
+  cost_price: number;
+  location?: string; // Shelf A1, Van 2
+  description?: string;
+  updated_at: string;
+}
+
 export interface Alert {
   id: string;
   device_name: string;

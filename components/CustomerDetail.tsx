@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Customer, Ticket, NetworkDevice, SubscriptionPlan, InstallationStatus, CustomerStatus, CustomerType } from '../types';
 import { ArrowLeft, Mail, Building, MapPin, Wifi, Calendar, Shield, CreditCard, LayoutDashboard, Plus, Router, HardHat, Phone, Globe, CheckCircle, FileText } from 'lucide-react';
 import { TicketList } from './TicketList';
@@ -15,6 +14,7 @@ import { Grid, GridItem } from './ui/grid';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
+import * as L from 'leaflet';
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -33,6 +33,83 @@ interface CustomerDetailProps {
   plans?: SubscriptionPlan[]; 
   onUpdateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>;
 }
+
+// Internal Map Component
+const MapPicker = ({ coordinates, onChange }: { coordinates: string, onChange: (val: string) => void }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<L.Map | null>(null);
+  const markerInstance = useRef<L.Marker | null>(null);
+
+  // Parse lat,long safely
+  const [lat, lng] = coordinates.split(',').map(s => parseFloat(s.trim()));
+  // Default to Jakarta Monas if invalid
+  const defaultCenter: [number, number] = [-6.1751, 106.8272]; 
+  const center: [number, number] = (!isNaN(lat) && !isNaN(lng)) ? [lat, lng] : defaultCenter;
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (mapInstance.current) return; // Prevent double init
+
+    const map = L.map(mapRef.current).setView(center, 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Fix for Leaflet default icons in this build environment
+    const icon = L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    const marker = L.marker(center, { draggable: true, icon }).addTo(map);
+    
+    marker.on('dragend', (e) => {
+        const { lat, lng } = e.target.getLatLng();
+        onChange(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+    });
+
+    map.on('click', (e) => {
+        marker.setLatLng(e.latlng);
+        onChange(`${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`);
+    });
+
+    mapInstance.current = map;
+    markerInstance.current = marker;
+
+    // Cleanup
+    return () => {
+        map.remove();
+        mapInstance.current = null;
+    }
+  }, []);
+
+  // Update map if coordinates prop changes externally (e.g. from input typing)
+  useEffect(() => {
+     if(markerInstance.current && mapInstance.current && !isNaN(lat) && !isNaN(lng)) {
+         const cur = markerInstance.current.getLatLng();
+         // Only update if significantly different to avoid jitter
+         if(Math.abs(cur.lat - lat) > 0.0001 || Math.abs(cur.lng - lng) > 0.0001) {
+             markerInstance.current.setLatLng([lat, lng]);
+             mapInstance.current.setView([lat, lng], mapInstance.current.getZoom());
+         }
+     }
+  }, [coordinates]);
+
+  return (
+    <div className="relative w-full h-64 rounded-lg overflow-hidden border border-gray-300 shadow-sm z-0">
+        <div ref={mapRef} className="w-full h-full" />
+        <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 text-[10px] text-gray-500 rounded z-[400] pointer-events-none">
+            Drag marker or click to set position
+        </div>
+    </div>
+  );
+};
 
 export const CustomerDetail: React.FC<CustomerDetailProps> = ({ 
   customer, 
@@ -163,7 +240,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                             <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
                                 <div className="p-4 border-b border-gray-200">
                                     <Label className="text-gray-500 text-xs uppercase mb-2 block">Current Installation Stage</Label>
-                                    <Flex align="center" gap={4}>
+                                    <Flex align="center" gap={4} wrap="wrap">
                                         <InstallationStatusBadge status={customer.installation_status} />
                                         {customer.installation_status === InstallationStatus.PENDING_SURVEY && <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(InstallationStatus.SCHEDULED)} isLoading={isUpdatingStatus}>Schedule Survey</Button>}
                                         {customer.installation_status === InstallationStatus.SCHEDULED && <Button size="sm" variant="outline" onClick={() => handleStatusUpdate(InstallationStatus.SURVEY_COMPLETED)} isLoading={isUpdatingStatus}>Complete Survey</Button>}
@@ -186,8 +263,26 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                             </div>
 
                             <Grid cols={1} className="md:grid-cols-2" gap={6}>
-                                <div><Label className="mb-1">ODP Port / FDT</Label><Input value={odpPort} onChange={(e) => setOdpPort(e.target.value)} placeholder="e.g. ODP-JKT-01/4" /><p className="text-xs text-gray-500 mt-1">Optical Distribution Point assignment.</p></div>
-                                <div><Label className="mb-1">Geo Coordinates</Label><div className="relative"><Input value={coordinates} onChange={(e) => setCoordinates(e.target.value)} placeholder="-6.123, 106.123" /><Globe className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" /></div><p className="text-xs text-gray-500 mt-1">Latitude, Longitude for map visualization.</p></div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label className="mb-1">ODP Port / FDT</Label>
+                                        <Input value={odpPort} onChange={(e) => setOdpPort(e.target.value)} placeholder="e.g. ODP-JKT-01/4" />
+                                        <p className="text-xs text-gray-500 mt-1">Optical Distribution Point assignment.</p>
+                                    </div>
+                                    <div>
+                                        <Label className="mb-1">Geo Coordinates</Label>
+                                        <div className="relative">
+                                            <Input value={coordinates} onChange={(e) => setCoordinates(e.target.value)} placeholder="-6.123, 106.123" />
+                                            <Globe className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">Lat, Long. Use the map to adjust.</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-1">
+                                    <Label className="mb-1">Coverage Map</Label>
+                                    <MapPicker coordinates={coordinates} onChange={setCoordinates} />
+                                </div>
                             </Grid>
 
                             <div className="flex justify-end border-t border-gray-100 pt-4">
