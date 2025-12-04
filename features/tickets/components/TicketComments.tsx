@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useComments } from '../hooks/useComments';
-import { Activity, Send } from 'lucide-react';
+import { Activity, Send, User } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Textarea } from '../../../components/ui/textarea';

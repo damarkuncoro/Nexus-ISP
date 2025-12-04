@@ -12,7 +12,7 @@ import { ClientDashboard } from './features/dashboard/components/ClientDashboard
 
 import { CustomerList } from './features/customers/components/CustomerList';
 import { CustomerForm } from './features/customers/components/CustomerForm';
-import { CustomerDetail } from './components/CustomerDetail';
+import { CustomerDetail } from './features/customers/components/CustomerDetail';
 
 import { PlansView } from './features/plans/components/PlansView';
 import { PlanDetail } from './features/plans/components/PlanDetail';
@@ -132,7 +132,7 @@ export const App: React.FC = () => {
         loadDevices(), 
         loadEmployees(), 
         loadCategories(), 
-        loadDepartments(),
+        loadDepartments(), 
         loadInvoices()
       ]);
     } catch (err) {

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Ticket } from '../../../types';
+import { Ticket, TicketComment } from '../../../types';
 import { analyzeTicketWithGemini, TicketAnalysis } from '../../../services/aiService';
 import { Card, CardHeader, CardContent, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -17,7 +17,7 @@ export const SmartTicketAssist: React.FC<SmartTicketAssistProps> = ({ ticket }) 
   const [analysis, setAnalysis] = useState<TicketAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { comments } = useComments(ticket.id); 
+  const { comments } = useComments(ticket.id); // Fetch latest comments for context
   const toast = useToast();
 
   const handleAnalyze = async () => {
@@ -78,6 +78,7 @@ export const SmartTicketAssist: React.FC<SmartTicketAssistProps> = ({ ticket }) 
           </div>
         ) : (
           <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* Sentiment & Summary */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Analysis</span>
@@ -88,6 +89,7 @@ export const SmartTicketAssist: React.FC<SmartTicketAssistProps> = ({ ticket }) 
               </p>
             </div>
 
+            {/* Root Cause */}
             <div className="bg-amber-50 dark:bg-amber-900/10 p-3 rounded-lg border border-amber-100 dark:border-amber-800">
               <h4 className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" /> Probable Root Cause
@@ -97,6 +99,7 @@ export const SmartTicketAssist: React.FC<SmartTicketAssistProps> = ({ ticket }) 
               </p>
             </div>
 
+            {/* Suggested Actions */}
             <div>
               <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Suggested Actions</h4>
               <ul className="space-y-2">
@@ -111,6 +114,7 @@ export const SmartTicketAssist: React.FC<SmartTicketAssistProps> = ({ ticket }) 
               </ul>
             </div>
 
+            {/* Draft Response */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
