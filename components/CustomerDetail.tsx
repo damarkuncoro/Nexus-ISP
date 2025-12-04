@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Customer, Ticket, NetworkDevice, SubscriptionPlan, InstallationStatus, CustomerStatus, CustomerType, AuditAction } from '../types';
-import { ArrowLeft, Mail, Building, MapPin, Wifi, Calendar, Shield, CreditCard, LayoutDashboard, Plus, Router, HardHat, Phone, Globe, CheckCircle, FileText, Activity, Clock, FileClock, User } from 'lucide-react';
+import { Mail, Building, MapPin, Wifi, Calendar, Shield, CreditCard, LayoutDashboard, Plus, Router, HardHat, Phone, Globe, FileText, Activity, Clock, FileClock, User } from 'lucide-react';
 import { TicketList } from './TicketList';
 import { BillingSection } from './BillingSection';
 import { CustomerDevices } from './CustomerDevices';
@@ -9,9 +9,8 @@ import { CustomerStatusBadge, InstallationStatusBadge } from './StatusBadges';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Avatar, AvatarFallback } from './ui/avatar';
 import { Flex } from './ui/flex';
-import { Grid, GridItem } from './ui/grid';
+import { Grid } from './ui/grid';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -19,6 +18,7 @@ import { BandwidthMonitor } from './BandwidthMonitor';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from './ui/table';
 import { useAuditLogs } from '../hooks/useAuditLogs';
 import * as L from 'leaflet';
+import { DetailHero, DetailSection, InfoItem, PageHeader } from './blocks/DetailBlocks';
 
 interface CustomerDetailProps {
   customer: Customer;
@@ -38,7 +38,7 @@ interface CustomerDetailProps {
   onUpdateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>;
 }
 
-// Internal Map Component
+// Internal Map Component (Kept same logic)
 const MapPicker = ({ coordinates, onChange }: { coordinates: string, onChange: (val: string) => void }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
@@ -46,13 +46,12 @@ const MapPicker = ({ coordinates, onChange }: { coordinates: string, onChange: (
 
   // Parse lat,long safely
   const [lat, lng] = coordinates.split(',').map(s => parseFloat(s.trim()));
-  // Default to Jakarta Monas if invalid
   const defaultCenter: [number, number] = [-6.1751, 106.8272]; 
   const center: [number, number] = (!isNaN(lat) && !isNaN(lng)) ? [lat, lng] : defaultCenter;
 
   useEffect(() => {
     if (!mapRef.current) return;
-    if (mapInstance.current) return; // Prevent double init
+    if (mapInstance.current) return;
 
     const map = L.map(mapRef.current).setView(center, 13);
     
@@ -60,7 +59,6 @@ const MapPicker = ({ coordinates, onChange }: { coordinates: string, onChange: (
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Fix for Leaflet default icons in this build environment
     const icon = L.icon({
         iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -86,18 +84,15 @@ const MapPicker = ({ coordinates, onChange }: { coordinates: string, onChange: (
     mapInstance.current = map;
     markerInstance.current = marker;
 
-    // Cleanup
     return () => {
         map.remove();
         mapInstance.current = null;
     }
   }, []);
 
-  // Update map if coordinates prop changes externally (e.g. from input typing)
   useEffect(() => {
      if(markerInstance.current && mapInstance.current && !isNaN(lat) && !isNaN(lng)) {
          const cur = markerInstance.current.getLatLng();
-         // Only update if significantly different to avoid jitter
          if(Math.abs(cur.lat - lat) > 0.0001 || Math.abs(cur.lng - lng) > 0.0001) {
              markerInstance.current.setLatLng([lat, lng]);
              mapInstance.current.setView([lat, lng], mapInstance.current.getZoom());
@@ -163,7 +158,7 @@ const ActivityTimeline = ({ customerId }: { customerId: string }) => {
 export const CustomerDetail: React.FC<CustomerDetailProps> = ({ 
   customer, 
   tickets, 
-  onBack,
+  onBack, 
   onTicketEdit,
   onTicketDelete,
   currency = 'USD',
@@ -216,43 +211,36 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 border-b border-gray-200 dark:border-slate-700 pb-6">
-            <Button 
-              variant="ghost"
-              size="icon"
-              onClick={onBack} 
-              className="rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300"
-            >
-                <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12 border border-gray-200 dark:border-slate-700">
-                    <AvatarFallback className="bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 font-bold text-lg">
-                        {customer.name.charAt(0)}
-                    </AvatarFallback>
-                </Avatar>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        {customer.name}
-                        <CustomerStatusBadge status={customer.account_status} />
-                    </h1>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span className="font-mono text-xs bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">{customer.id.slice(0,8)}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${customer.type === CustomerType.CORPORATE ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}>
-                          {customer.type}
-                        </span>
-                    </div>
+        
+        <PageHeader title="Subscriber Details" onBack={onBack} />
+
+        <DetailHero 
+            title={customer.name}
+            subtitle={
+                <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400">ID: {customer.id.slice(0,8)}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded font-medium ${customer.type === CustomerType.CORPORATE ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`}>
+                        {customer.type.toUpperCase()}
+                    </span>
                 </div>
-              </div>
-            </div>
-        </div>
+            }
+            status={<CustomerStatusBadge status={customer.account_status} />}
+            avatarUrl=""
+            avatarFallback={customer.name}
+            metadata={
+                <>
+                    <Flex align="center" gap={2}><Mail className="w-3.5 h-3.5" /> {customer.email}</Flex>
+                    {customer.phone && <Flex align="center" gap={2}><Phone className="w-3.5 h-3.5" /> {customer.phone}</Flex>}
+                    {customer.address && <Flex align="center" gap={2}><MapPin className="w-3.5 h-3.5" /> {customer.address}</Flex>}
+                </>
+            }
+        />
 
         <Tabs defaultValue="overview">
             <TabsList className="mb-6">
                 <TabsTrigger value="overview"><LayoutDashboard className="w-4 h-4 mr-2" /> Overview</TabsTrigger>
                 <TabsTrigger value="usage"><Activity className="w-4 h-4 mr-2" /> Network Usage</TabsTrigger>
-                <TabsTrigger value="technical"><HardHat className="w-4 h-4 mr-2" /> Installation & Tech</TabsTrigger>
+                <TabsTrigger value="technical"><HardHat className="w-4 h-4 mr-2" /> Installation</TabsTrigger>
                 <TabsTrigger value="billing"><CreditCard className="w-4 h-4 mr-2" /> Billing</TabsTrigger>
                 <TabsTrigger value="devices"><Router className="w-4 h-4 mr-2" /> Devices</TabsTrigger>
                 <TabsTrigger value="activity"><FileClock className="w-4 h-4 mr-2" /> Activity Log</TabsTrigger>
@@ -260,28 +248,38 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
 
             <TabsContent value="overview">
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <Card>
-                        <CardHeader className="py-4"><h2 className="text-lg font-medium text-gray-900 dark:text-white m-0">Subscriber Information</h2></CardHeader>
-                        <CardContent>
-                          <Grid cols={1} className="md:grid-cols-2 lg:grid-cols-3" gap={6}>
-                            <InfoItem icon={Mail} label="Email" value={customer.email} color="blue" />
-                            <InfoItem icon={Phone} label="Phone / WA" value={customer.phone || 'N/A'} color="green" />
-                            <InfoItem icon={Building} label="Type / Company" value={customer.type === 'corporate' ? customer.company : 'Residential'} subValue={customer.identity_number || 'No ID'} color="purple" />
-                            <InfoItem icon={MapPin} label="Service Address" value={customer.address || 'N/A'} color="amber" />
-                            <InfoItem icon={Wifi} label="Current Plan" value={customer.subscription_plan || 'Standard'} isButton={!!customer.plan_id} onClick={() => customer.plan_id && onPlanClick && onPlanClick(customer.plan_id)} color="emerald" />
-                            <InfoItem icon={Calendar} label="Registered Since" value={new Date(customer.created_at).toLocaleDateString()} color="gray" />
+                    <DetailSection title="Subscriber Information" icon={User}>
+                          <Grid cols={1} className="md:grid-cols-2 lg:grid-cols-3" gap={0}>
+                            <InfoItem icon={Mail} label="Email" value={customer.email} className="border-r border-gray-100 dark:border-slate-700" />
+                            <InfoItem icon={Phone} label="Phone / WA" value={customer.phone || 'N/A'} className="border-r border-gray-100 dark:border-slate-700" />
+                            <InfoItem icon={Building} label="Company / ID" value={customer.type === 'corporate' ? customer.company : customer.identity_number || 'N/A'} />
+                            <InfoItem icon={MapPin} label="Service Address" value={customer.address || 'N/A'} className="border-r border-gray-100 dark:border-slate-700" />
+                            <InfoItem icon={Wifi} label="Current Plan" value={
+                                customer.plan_id ? (
+                                    <button onClick={() => customer.plan_id && onPlanClick && onPlanClick(customer.plan_id)} className="text-primary-600 hover:underline">
+                                        {customer.subscription_plan}
+                                    </button>
+                                ) : customer.subscription_plan || 'Standard'
+                            } className="border-r border-gray-100 dark:border-slate-700" />
+                            <InfoItem icon={Calendar} label="Registered Since" value={new Date(customer.created_at).toLocaleDateString()} />
                           </Grid>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="py-4 flex flex-row justify-between items-center">
-                            <div className="flex items-center gap-3"><h2 className="text-lg font-medium text-gray-900 dark:text-white m-0">Support Ticket History</h2><span className="bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 text-xs px-2.5 py-0.5 rounded-full font-medium">{tickets.length}</span></div>
-                            {onCreateTicket && (<Button size="sm" onClick={onCreateTicket}><Plus className="w-3 h-3 mr-1" /> New Ticket</Button>)}
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {tickets.length > 0 ? (<div className="border-t border-gray-100 dark:border-slate-700"><TicketList tickets={tickets} onEdit={onTicketEdit} onDelete={onTicketDelete} onTicketClick={onTicketClick} compact /></div>) : (<div className="text-center py-12"><Shield className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-600" /><h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">No tickets found</h3><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">This customer hasn't reported any issues yet.</p>{onCreateTicket && (<button onClick={onCreateTicket} className="mt-4 inline-flex items-center text-sm text-primary-600 hover:text-primary-700 font-medium">Create their first ticket &rarr;</button>)}</div>)}
-                        </CardContent>
-                    </Card>
+                    </DetailSection>
+
+                    <DetailSection 
+                        title="Support Ticket History" 
+                        icon={Shield} 
+                        action={onCreateTicket && <Button size="sm" onClick={onCreateTicket}><Plus className="w-3 h-3 mr-1" /> New Ticket</Button>}
+                    >
+                        {tickets.length > 0 ? (
+                            <TicketList tickets={tickets} onEdit={onTicketEdit} onDelete={onTicketDelete} onTicketClick={onTicketClick} compact />
+                        ) : (
+                            <div className="text-center py-12">
+                                <Shield className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-600" />
+                                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-200">No tickets found</h3>
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">This customer hasn't reported any issues yet.</p>
+                            </div>
+                        )}
+                    </DetailSection>
                 </div>
             </TabsContent>
 
@@ -317,13 +315,6 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                                         <TableCell className="font-mono text-xs">10.20.100.12</TableCell>
                                         <TableCell className="text-gray-500 dark:text-gray-400 text-xs">Client Request</TableCell>
                                     </TableRow>
-                                    <TableRow>
-                                        <TableCell>{new Date(Date.now() - 172800000).toLocaleDateString()} 08:00:00</TableCell>
-                                        <TableCell>{new Date(Date.now() - 86400000).toLocaleDateString()} 09:10:00</TableCell>
-                                        <TableCell>25h 10m</TableCell>
-                                        <TableCell className="font-mono text-xs">10.20.100.12</TableCell>
-                                        <TableCell className="text-red-500 dark:text-red-400 text-xs">Lost Carrier</TableCell>
-                                    </TableRow>
                                 </TableBody>
                             </Table>
                         </CardContent>
@@ -333,10 +324,8 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
 
             <TabsContent value="technical">
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <Card>
-                        <CardHeader className="py-4"><h2 className="text-lg font-medium text-gray-900 dark:text-white">Infrastructure Mapping & Workflow</h2></CardHeader>
-                        <CardContent className="space-y-6">
-                            
+                    <DetailSection title="Infrastructure Mapping & Workflow" icon={HardHat}>
+                        <div className="p-6 space-y-6">
                             <div className="bg-gray-50 dark:bg-slate-900/50 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
                                 <div className="p-4 border-b border-gray-200 dark:border-slate-700">
                                     <Label className="text-gray-500 dark:text-gray-400 text-xs uppercase mb-2 block">Current Installation Stage</Label>
@@ -388,8 +377,8 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                             <div className="flex justify-end border-t border-gray-100 dark:border-slate-700 pt-4">
                                 <Button onClick={handleSaveTechData} isLoading={isSaving}>Save Technical Data</Button>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </DetailSection>
                 </div>
             </TabsContent>
 
@@ -398,37 +387,14 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             
             <TabsContent value="activity">
                 <div className="animate-in fade-in duration-300">
-                    <Card>
-                        <CardHeader className="py-4 border-b border-gray-100 dark:border-slate-700">
-                            <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                                <FileClock className="w-5 h-5 text-gray-500" /> Activity Log
-                            </h2>
-                        </CardHeader>
-                        <CardContent className="p-6">
+                    <DetailSection title="Activity Log" icon={FileClock}>
+                        <div className="p-6">
                             <ActivityTimeline customerId={customer.id} />
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </DetailSection>
                 </div>
             </TabsContent>
         </Tabs>
     </div>
   );
 };
-
-// Reusable Info Item sub-component for the Overview tab
-const InfoItem = ({ icon: Icon, label, value, subValue, color, isButton, onClick }: any) => (
-  <Flex align="start" gap={3}>
-      <div className={`p-2 bg-${color}-50 dark:bg-${color}-900/20 rounded-lg`}>
-          <Icon className={`w-5 h-5 text-${color}-600 dark:text-${color}-400`} />
-      </div>
-      <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</p>
-          {isButton ? (
-              <button onClick={onClick} className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 hover:underline mt-1 text-left">{value}</button>
-          ) : (
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-200 mt-1">{value}</p>
-          )}
-          {subValue && <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">{subValue}</p>}
-      </div>
-  </Flex>
-);

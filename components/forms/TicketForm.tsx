@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Ticket, TicketStatus, TicketPriority, Customer, Employee, TicketCategoryConfig } from '../../types';
+import { Ticket, TicketStatus, TicketPriority, Customer, Employee, TicketCategoryConfig, EmployeeRole } from '../../types';
 import { Save, FileText, Tag, ArrowLeft, CheckCircle, Microscope, Clock } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
@@ -10,6 +10,7 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Grid, GridItem } from '../ui/grid';
 import { Flex } from '../ui/flex';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface TicketFormProps {
   onClose: () => void;
@@ -29,6 +30,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   employees,
   categories
 }) => {
+  const { currentUser } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TicketStatus>(TicketStatus.OPEN);
@@ -45,6 +47,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
   const isEditMode = !!(initialData && initialData.id);
+  const isCustomer = currentUser?.role === EmployeeRole.CUSTOMER;
 
   const formatDateTimeLocal = (date: Date) => {
     const year = date.getFullYear();
@@ -94,8 +97,16 @@ export const TicketForm: React.FC<TicketFormProps> = ({
           setCategory(defaultCat.code);
           setDueDate(calculateSlaDueDate(defaultCat.sla_hours));
       }
+      
+      // Auto-select logged-in customer
+      if (isCustomer && currentUser) {
+          const foundCustomer = customers.find(c => c.email === currentUser.email);
+          if (foundCustomer) {
+              setCustomerId(foundCustomer.id);
+          }
+      }
     }
-  }, [initialData, categories]);
+  }, [initialData, categories, currentUser, isCustomer, customers]);
 
   const resetForm = () => {
     setTitle('');
@@ -122,6 +133,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
   const validate = () => {
     const newErrors: Record<string, boolean> = {};
     if (!title.trim()) newErrors.title = true;
+    if (!customerId && !isCustomer) newErrors.customer = true; // Admin needs to pick customer
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -138,7 +150,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
         status, 
         priority,
         category,
-        customer_id: customerId === '' ? null : customerId,
+        customer_id: customerId || null,
         assigned_to: assignedTo || null,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
         resolution_notes: resolutionNotes || null,
@@ -162,7 +174,7 @@ export const TicketForm: React.FC<TicketFormProps> = ({
            </Button>
            <div>
              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{isEditMode ? 'Edit Ticket' : 'New Ticket'}</h1>
-             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{isEditMode ? `Updating ticket #${initialData?.id?.substring(0, 8)}` : 'Create a new support ticket'}</p>
+             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{isEditMode ? `Updating ticket #${initialData?.id?.substring(0, 8)}` : isCustomer ? 'Describe your issue below' : 'Create a new support ticket'}</p>
            </div>
          </Flex>
       </div>
@@ -170,80 +182,97 @@ export const TicketForm: React.FC<TicketFormProps> = ({
       <Card>
           <form onSubmit={handleSubmit}>
             <CardContent className="p-8">
-                <Grid cols={1} className="lg:grid-cols-3" gap={10}>
-                    <GridItem className="lg:col-span-2 space-y-6">
+                <Grid cols={1} className={isCustomer ? "lg:grid-cols-1" : "lg:grid-cols-3"} gap={10}>
+                    <GridItem className={isCustomer ? "" : "lg:col-span-2 space-y-6"}>
                         <div className="border-b border-gray-100 dark:border-slate-700 pb-3 mb-4">
                             <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                                 <FileText className="w-4 h-4 text-primary-600" /> Issue Details
                             </h4>
                         </div>
-                        <div>
+                        
+                        {!isCustomer && (
+                            <div>
+                                <Label htmlFor="customer" className="mb-1">Subscriber <span className="text-red-500">*</span></Label>
+                                <Select id="customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)} error={errors.customer}>
+                                    <option value="">-- Select Subscriber --</option>
+                                    {customers.map((c) => (<option key={c.id} value={c.id}>{c.name} {c.address ? `• ${c.address}` : ''}</option>))}
+                                </Select>
+                                {errors.customer && <p className="mt-1 text-xs text-red-600">Subscriber is required.</p>}
+                            </div>
+                        )}
+
+                        <div className="mt-4">
                             <Label htmlFor="title" className="mb-1">Subject <span className="text-red-500">*</span></Label>
                             <Input id="title" value={title} onChange={(e) => { setTitle(e.target.value); if(errors.title) setErrors({...errors, title: false}); }} placeholder="e.g. No Internet Connection" error={errors.title} />
                             {errors.title && <p className="mt-1 text-xs text-red-600">Subject is required.</p>}
                         </div>
-                        <div>
-                            <Label htmlFor="customer" className="mb-1">Subscriber</Label>
-                            <Select id="customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                                <option value="">-- Select Subscriber --</option>
-                                {customers.map((c) => (<option key={c.id} value={c.id}>{c.name} {c.address ? `• ${c.address}` : ''}</option>))}
-                            </Select>
-                        </div>
-                        <div>
+                        
+                        <div className="mt-4">
                             <Label htmlFor="description" className="mb-1">Description</Label>
                             <Textarea id="description" rows={8} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the issue, troubleshooting steps taken, and any error codes..." />
                         </div>
+                        
+                        {isCustomer && (
+                             <div className="mt-4">
+                                <Label htmlFor="category" className="mb-1">Category (Optional)</Label>
+                                <Select id="category" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
+                                    {categories.length > 0 ? (categories.map((cat) => (<option key={cat.id} value={cat.code}>{cat.name}</option>))) : (<option value="internet_issue">Internet Issue (Default)</option>)}
+                                </Select>
+                            </div>
+                        )}
                     </GridItem>
 
-                    <GridItem className="space-y-6 lg:pl-8 lg:border-l lg:border-gray-100 dark:lg:border-slate-700">
-                        <div className="border-b border-gray-100 dark:border-slate-700 pb-3 mb-4">
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                                <Tag className="w-4 h-4 text-primary-600" /> Triage
-                            </h4>
-                        </div>
-                        <div>
-                            <Label className="uppercase text-xs text-gray-500 dark:text-gray-400 mb-2 block">Priority</Label>
-                            <Grid cols={3} gap={2}>
-                                {[TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH].map((p) => (
-                                    <button key={p} type="button" onClick={() => setPriority(p)} className={`px-2 py-2 text-xs font-medium rounded-md border text-center transition-all ${ priority === p ? (p === TicketPriority.HIGH ? 'bg-red-50 border-red-200 text-red-700 ring-1 ring-red-500 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400' : p === TicketPriority.MEDIUM ? 'bg-orange-50 border-orange-200 text-orange-700 ring-1 ring-orange-500 dark:bg-orange-900/30 dark:border-orange-800 dark:text-orange-400' : 'bg-gray-100 border-gray-300 text-gray-800 ring-1 ring-gray-500 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200') : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-400 dark:hover:bg-slate-700' }`}>
-                                        {p.toUpperCase()}
-                                    </button>
-                                ))}
-                            </Grid>
-                        </div>
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <Label htmlFor="category">Category</Label>
-                                {currentCategoryConfig && (<span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium border border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">SLA: {currentCategoryConfig.sla_hours}h</span>)}
+                    {!isCustomer && (
+                        <GridItem className="space-y-6 lg:pl-8 lg:border-l lg:border-gray-100 dark:lg:border-slate-700">
+                            <div className="border-b border-gray-100 dark:border-slate-700 pb-3 mb-4">
+                                <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                                    <Tag className="w-4 h-4 text-primary-600" /> Triage
+                                </h4>
                             </div>
-                            <Select id="category" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
-                                {categories.length > 0 ? (categories.map((cat) => (<option key={cat.id} value={cat.code}>{cat.name}</option>))) : (<option value="internet_issue">Internet Issue (Default)</option>)}
-                            </Select>
-                        </div>
-                        <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
-                            <Label htmlFor="status" className="mb-1">Status</Label>
-                            <Select id="status" value={status} onChange={(e) => setStatus(e.target.value as TicketStatus)}>
-                                <option value={TicketStatus.OPEN}>Open</option>
-                                <option value={TicketStatus.ASSIGNED}>Assigned</option>
-                                <option value={TicketStatus.IN_PROGRESS}>In Progress</option>
-                                <option value={TicketStatus.RESOLVED}>Resolved</option>
-                                <option value={TicketStatus.VERIFIED}>Verified</option>
-                                <option value={TicketStatus.CLOSED}>Closed</option>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label htmlFor="assignedTo" className="mb-1">Assigned Agent</Label>
-                            <Select id="assignedTo" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
-                                <option value="">-- Unassigned --</option>
-                                {employees.map((emp) => (<option key={emp.id} value={emp.name}>{emp.name} ({emp.role})</option>))}
-                            </Select>
-                        </div>
-                        <div>
-                            <Label htmlFor="dueDate" className="mb-1 flex items-center gap-2">Due Date / SLA <Clock className="w-3 h-3 text-gray-400" /></Label>
-                            <Input type="datetime-local" id="dueDate" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-                            <p className="text-[10px] text-gray-400 mt-1">Auto-calculated based on Category SLA.</p>
-                        </div>
-                    </GridItem>
+                            <div>
+                                <Label className="uppercase text-xs text-gray-500 dark:text-gray-400 mb-2 block">Priority</Label>
+                                <Grid cols={3} gap={2}>
+                                    {[TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH].map((p) => (
+                                        <button key={p} type="button" onClick={() => setPriority(p)} className={`px-2 py-2 text-xs font-medium rounded-md border text-center transition-all ${ priority === p ? (p === TicketPriority.HIGH ? 'bg-red-50 border-red-200 text-red-700 ring-1 ring-red-500 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400' : p === TicketPriority.MEDIUM ? 'bg-orange-50 border-orange-200 text-orange-700 ring-1 ring-orange-500 dark:bg-orange-900/30 dark:border-orange-800 dark:text-orange-400' : 'bg-gray-100 border-gray-300 text-gray-800 ring-1 ring-gray-500 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200') : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-400 dark:hover:bg-slate-700' }`}>
+                                            {p.toUpperCase()}
+                                        </button>
+                                    ))}
+                                </Grid>
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <Label htmlFor="category">Category</Label>
+                                    {currentCategoryConfig && (<span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium border border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">SLA: {currentCategoryConfig.sla_hours}h</span>)}
+                                </div>
+                                <Select id="category" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
+                                    {categories.length > 0 ? (categories.map((cat) => (<option key={cat.id} value={cat.code}>{cat.name}</option>))) : (<option value="internet_issue">Internet Issue (Default)</option>)}
+                                </Select>
+                            </div>
+                            <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                                <Label htmlFor="status" className="mb-1">Status</Label>
+                                <Select id="status" value={status} onChange={(e) => setStatus(e.target.value as TicketStatus)}>
+                                    <option value={TicketStatus.OPEN}>Open</option>
+                                    <option value={TicketStatus.ASSIGNED}>Assigned</option>
+                                    <option value={TicketStatus.IN_PROGRESS}>In Progress</option>
+                                    <option value={TicketStatus.RESOLVED}>Resolved</option>
+                                    <option value={TicketStatus.VERIFIED}>Verified</option>
+                                    <option value={TicketStatus.CLOSED}>Closed</option>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label htmlFor="assignedTo" className="mb-1">Assigned Agent</Label>
+                                <Select id="assignedTo" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+                                    <option value="">-- Unassigned --</option>
+                                    {employees.map((emp) => (<option key={emp.id} value={emp.name}>{emp.name} ({emp.role})</option>))}
+                                </Select>
+                            </div>
+                            <div>
+                                <Label htmlFor="dueDate" className="mb-1 flex items-center gap-2">Due Date / SLA <Clock className="w-3 h-3 text-gray-400" /></Label>
+                                <Input type="datetime-local" id="dueDate" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                                <p className="text-[10px] text-gray-400 mt-1">Auto-calculated based on Category SLA.</p>
+                            </div>
+                        </GridItem>
+                    )}
                 </Grid>
 
                 <div className={`mt-8 transition-all duration-500 ease-in-out ${status === TicketStatus.RESOLVED || status === TicketStatus.VERIFIED || status === TicketStatus.CLOSED ? 'block' : 'hidden'}`}>
@@ -252,10 +281,12 @@ export const TicketForm: React.FC<TicketFormProps> = ({
                             <Label htmlFor="resolution" className="text-green-800 dark:text-green-400 mb-2 flex items-center"><CheckCircle className="w-4 h-4 mr-2" /> Resolution Notes</Label>
                             <Textarea id="resolution" rows={3} className="border-green-200 dark:border-green-800 focus:ring-green-500 focus:border-green-500" value={resolutionNotes} onChange={(e) => setResolutionNotes(e.target.value)} placeholder="Describe how the issue was resolved..." />
                         </div>
-                        <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800 rounded-lg p-6">
-                            <Label htmlFor="rca" className="text-purple-800 dark:text-purple-400 mb-2 flex items-center"><Microscope className="w-4 h-4 mr-2" /> Root Cause Analysis (RCA)</Label>
-                            <Textarea id="rca" rows={3} className="border-purple-200 dark:border-purple-800 focus:ring-purple-500 focus:border-purple-500" value={rootCause} onChange={(e) => setRootCause(e.target.value)} placeholder="Why did this issue occur? (e.g. Fiber cut, Power outage)" />
-                        </div>
+                        {!isCustomer && (
+                            <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800 rounded-lg p-6">
+                                <Label htmlFor="rca" className="text-purple-800 dark:text-purple-400 mb-2 flex items-center"><Microscope className="w-4 h-4 mr-2" /> Root Cause Analysis (RCA)</Label>
+                                <Textarea id="rca" rows={3} className="border-purple-200 dark:border-purple-800 focus:ring-purple-500 focus:border-purple-500" value={rootCause} onChange={(e) => setRootCause(e.target.value)} placeholder="Why did this issue occur? (e.g. Fiber cut, Power outage)" />
+                            </div>
+                        )}
                     </Grid>
                 </div>
             </CardContent>

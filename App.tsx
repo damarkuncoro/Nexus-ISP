@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/Layout';
 import { DashboardView } from './components/DashboardView';
+import { ClientDashboard } from './components/ClientDashboard';
 import { TicketList } from './components/TicketList';
 import { TicketForm } from './components/forms/TicketForm';
 import { TicketDetail } from './components/TicketDetail';
@@ -19,6 +20,7 @@ import { EmployeeDetail } from './components/EmployeeDetail';
 import { InventoryView } from './components/InventoryView';
 import { InventoryForm } from './components/forms/InventoryForm';
 import { FinanceView } from './components/FinanceView';
+import { BillingSection } from './components/BillingSection';
 import { SettingsView } from './components/SettingsView';
 import { AlertsView } from './components/AlertsView';
 import { AccessDenied } from './components/AccessDenied';
@@ -28,7 +30,7 @@ import { LoginView } from './components/LoginView';
 import { KnowledgeBase } from './components/KnowledgeBase';
 import { ReportsView } from './components/ReportsView';
 import { ProfileView } from './components/ProfileView';
-import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem } from './types';
+import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem, EmployeeRole } from './types';
 import { Plus, Loader2 } from 'lucide-react';
 import { SETUP_SQL } from './constants';
 import { useTickets } from './hooks/useTickets';
@@ -40,6 +42,7 @@ import { useCategories } from './hooks/useCategories';
 import { useSettings } from './hooks/useSettings';
 import { useDepartments } from './hooks/useDepartments';
 import { useInventory } from './hooks/useInventory';
+import { useFinance } from './hooks/useFinance';
 import { useAuth } from './contexts/AuthContext';
 import { useToast } from './contexts/ToastContext';
 import { getSafeErrorMessage, isSetupError } from './utils/errorHelpers';
@@ -76,6 +79,7 @@ export const App: React.FC = () => {
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
   const { departments, loading: departmentsLoading, loadDepartments } = useDepartments();
   const { items: inventoryItems, addItem: addInventoryItem, editItem: editInventoryItem } = useInventory(); 
+  const { invoices, loadInvoices } = useFinance();
 
   const loading = ticketsLoading || customersLoading || plansLoading || devicesLoading || employeesLoading || categoriesLoading || departmentsLoading || settingsLoading;
   const globalError = ticketsError || customersError;
@@ -99,7 +103,6 @@ export const App: React.FC = () => {
   const [previousView, setPreviousView] = useState<AppView | null>(null);
 
   const loadData = useCallback(async () => {
-    // Only load data if logged in
     if (!currentUser) return;
 
     setSetupError(false);
@@ -111,12 +114,13 @@ export const App: React.FC = () => {
         loadDevices(), 
         loadEmployees(), 
         loadCategories(), 
-        loadDepartments()
+        loadDepartments(),
+        loadInvoices()
       ]);
     } catch (err) {
       console.error("Data load failed via hooks");
     }
-  }, [currentUser, loadTickets, loadCustomers, loadPlans, loadDevices, loadEmployees, loadCategories, loadDepartments]);
+  }, [currentUser, loadTickets, loadCustomers, loadPlans, loadDevices, loadEmployees, loadCategories, loadDepartments, loadInvoices]);
 
   useEffect(() => { loadData(); }, [loadData]);
   
@@ -137,7 +141,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // If not logged in, show login screen
   if (!currentUser) {
       return <LoginView />;
   }
@@ -153,12 +156,11 @@ export const App: React.FC = () => {
         'map': 'map',
         'kb': 'kb',
         'reports': 'reports',
-        'profile': 'dashboard' // Profile doesn't have a sidebar item active state usually
+        'profile': 'dashboard' 
       };
       return formMap[view] || view;
   };
 
-  // Navigation Helpers
   const handleCustomerClick = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     if (customer) { setSelectedCustomer(customer); setView('customers'); }
@@ -175,7 +177,6 @@ export const App: React.FC = () => {
     setView('tickets');
   };
 
-  // CRUD Handlers
   const handleCreateTicket = async (ticketData: any) => { try { await addTicket(ticketData); setView('tickets'); setSelectedTicket(null); toast.success('Ticket created successfully!'); } catch (err) { toast.error("Failed: " + getSafeErrorMessage(err)); }};
   const handleUpdateTicket = async (id: string, updates: any) => { try { const updated = await editTicket(id, updates); setView('tickets'); setEditingTicket(null); if (selectedTicket && selectedTicket.id === id) setSelectedTicket(updated); toast.success('Ticket updated successfully!'); } catch (err) { toast.error("Failed: " + getSafeErrorMessage(err)); }};
   const handleQuickUpdateTicket = async (id: string, updates: any) => { try { const updated = await editTicket(id, updates); if (selectedTicket && selectedTicket.id === id) setSelectedTicket(updated); toast.info('Ticket status updated.'); } catch (err) { toast.error("Failed: " + getSafeErrorMessage(err)); }};
@@ -196,7 +197,6 @@ export const App: React.FC = () => {
 
   const handleCopySQL = () => { navigator.clipboard.writeText(SETUP_SQL); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
-  // View Transitions
   const openCreateTicket = (preselectedCustomer?: Customer) => { setEditingTicket(preselectedCustomer ? { customer_id: preselectedCustomer.id } : null); setView('ticket-form'); };
   const openEditTicket = (ticket: Ticket) => { setEditingTicket(ticket); setView('ticket-form'); };
   const openCreateTicketFromAlert = (data: Partial<Ticket>) => { setEditingTicket(data); setView('ticket-form'); };
@@ -213,7 +213,8 @@ export const App: React.FC = () => {
 
   const getPageTitle = () => {
       const titles: Record<string, string> = {
-          dashboard: 'Dashboard Overview', alerts: 'Network Alerts',
+          dashboard: currentUser.role === EmployeeRole.CUSTOMER ? 'My Dashboard' : 'Dashboard Overview', 
+          alerts: 'Network Alerts',
           customers: selectedCustomer ? 'Subscriber Details' : 'Subscriber Management', 'customer-form': 'Subscriber Form',
           plans: selectedPlan ? 'Plan Details' : 'Service Packages', 'plan-form': editingPlan ? 'Edit Plan' : 'New Plan',
           network: 'Network Infrastructure', 'device-form': editingDevice && editingDevice.id ? 'Edit Device' : 'New Device',
@@ -221,7 +222,7 @@ export const App: React.FC = () => {
           tickets: selectedTicket ? 'Ticket Details' : 'Ticket Management', 'ticket-form': editingTicket?.id ? 'Edit Ticket' : 'New Ticket',
           employees: selectedEmployee ? 'Team Member Profile' : 'Team Management', 'employee-form': editingEmployee ? 'Edit Member' : 'New Member',
           inventory: 'Warehouse Inventory', 'inventory-form': editingInventory ? 'Edit Item' : 'New Item',
-          finance: 'Finance & Billing',
+          finance: currentUser.role === EmployeeRole.CUSTOMER ? 'My Billing' : 'Finance & Billing',
           map: 'Service Coverage',
           kb: 'Knowledge Base',
           reports: 'Analytics & Reports',
@@ -231,13 +232,20 @@ export const App: React.FC = () => {
   };
 
   const renderContent = () => {
-    // Permission Checks
-    if (view === 'settings' && !hasPermission('manage_settings')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin" />;
-    if ((view === 'employees' || view === 'employee-form') && !hasPermission('manage_team')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin or Manager" />;
-    if ((view === 'inventory' || view === 'inventory-form') && !hasPermission('manage_network') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Tech or Admin" />;
-    if ((view === 'finance' || view === 'reports') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Finance/Admin" />;
+    const isCustomer = currentUser.role === EmployeeRole.CUSTOMER;
 
-    // Forms
+    if (isCustomer) {
+       const allowedViews = ['dashboard', 'tickets', 'ticket-form', 'finance', 'kb', 'profile'];
+       if (!allowedViews.includes(view)) {
+           return <AccessDenied onBack={() => setView('dashboard')} />;
+       }
+    } else {
+        if (view === 'settings' && !hasPermission('manage_settings')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin" />;
+        if ((view === 'employees' || view === 'employee-form') && !hasPermission('manage_team')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin or Manager" />;
+        if ((view === 'inventory' || view === 'inventory-form') && !hasPermission('manage_network') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Tech or Admin" />;
+        if ((view === 'finance' || view === 'reports') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Finance/Admin" />;
+    }
+
     if (view === 'ticket-form') return <TicketForm onClose={() => setView('tickets')} onSubmit={editingTicket && editingTicket.id ? (d) => handleUpdateTicket(editingTicket.id!, d) : handleCreateTicket} initialData={editingTicket || undefined} isLoading={false} customers={customers} employees={employees} categories={categories} />;
     if (view === 'customer-form') return <CustomerForm onClose={() => setView('customers')} onSubmit={handleCreateCustomer} plans={plans} currency={currency} />;
     if (view === 'plan-form') return <PlanForm onClose={() => setView('plans')} onSubmit={handleCreatePlan} initialData={editingPlan || undefined} currency={currency} />;
@@ -245,10 +253,8 @@ export const App: React.FC = () => {
     if (view === 'employee-form') return <EmployeeForm onClose={() => setView('employees')} onSubmit={editingEmployee ? handleUpdateEmployee : handleCreateEmployee} initialData={editingEmployee || undefined} departments={departments} />;
     if (view === 'inventory-form') return <InventoryForm onClose={() => setView('inventory')} onSubmit={editingInventory ? handleUpdateInventory : handleCreateInventory} initialData={editingInventory || undefined} />;
     
-    // Settings
     if (view === 'settings') return <SettingsView connectionStatus={globalError ? 'error' : 'connected'} currency={currency} onCurrencyChange={saveCurrency} />;
 
-    // Global Error State (DB Connection / Setup)
     if (globalError) {
         return (
             <div className={`mb-6 rounded-lg p-4 border ${setupError ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'}`}>
@@ -271,19 +277,43 @@ export const App: React.FC = () => {
         );
     }
 
-    // Loading State
     if (loading) return <div className="flex justify-center h-64 items-center"><Loader2 className="animate-spin w-8 h-8 text-primary-500" /></div>;
 
-    // Main Views
     switch (view) {
-        case 'dashboard': return <DashboardView tickets={tickets} customers={customers} onTicketClick={handleTicketClick} onViewChange={(v) => handleViewChange(v)} />;
+        case 'dashboard': 
+            return isCustomer ? (
+                <ClientDashboard 
+                    customer={customers.find(c => c.email === currentUser.email) || customers[0]} 
+                    tickets={tickets.filter(t => t.customer_id === (customers.find(c => c.email === currentUser.email)?.id || ''))} 
+                    invoices={invoices.filter(i => i.customer_id === (customers.find(c => c.email === currentUser.email)?.id || ''))}
+                    currency={currency}
+                    onCreateTicket={() => openCreateTicket()}
+                    onPayBill={() => setView('finance')}
+                />
+            ) : (
+                <DashboardView tickets={tickets} customers={customers} onTicketClick={handleTicketClick} onViewChange={(v) => handleViewChange(v)} />
+            );
         case 'alerts': return <AlertsView onCreateTicket={openCreateTicketFromAlert} />;
-        case 'finance': return <FinanceView customers={customers} plans={plans} currency={currency} />;
+        case 'finance': 
+            if (isCustomer) {
+                // Find current user's customer profile
+                const myCustomerProfile = customers.find(c => c.email === currentUser.email);
+                if (myCustomerProfile) {
+                    return <BillingSection customer={myCustomerProfile} currency={currency} plans={plans} />;
+                }
+                return <div className="p-8 text-center text-gray-500">Customer profile not found. Please contact support.</div>;
+            }
+            return <FinanceView customers={customers} plans={plans} currency={currency} />;
         case 'reports': return <ReportsView customers={customers} tickets={tickets} currency={currency} />;
         case 'map': return <CoverageMap customers={customers} onCustomerSelect={handleCustomerClick} />;
         case 'kb': return <KnowledgeBase />;
         case 'profile': return <ProfileView />;
         case 'tickets': 
+          // Filter tickets for customers
+          const visibleTickets = isCustomer 
+            ? tickets.filter(t => t.customer_id === (customers.find(c => c.email === currentUser.email)?.id || '')) 
+            : tickets;
+
           return selectedTicket 
             ? <TicketDetail 
                 ticket={selectedTicket} 
@@ -295,7 +325,7 @@ export const App: React.FC = () => {
                 employees={employees} 
               /> 
             : <TicketList 
-                tickets={tickets} 
+                tickets={visibleTickets} 
                 onEdit={openEditTicket} 
                 onDelete={handleDeleteTicket} 
                 onCustomerClick={handleCustomerClick} 
@@ -375,6 +405,12 @@ export const App: React.FC = () => {
   };
 
   const shouldShowAddButton = () => {
+      const isCustomer = currentUser.role === EmployeeRole.CUSTOMER;
+      // Allow customers to create tickets only
+      if (isCustomer) {
+          return view === 'tickets';
+      }
+
       const formViews = ['ticket-form', 'customer-form', 'plan-form', 'device-form', 'employee-form', 'inventory-form', 'map', 'kb', 'reports', 'profile'];
       if (formViews.includes(view) || globalError || selectedCustomer || selectedPlan || selectedTicket || selectedEmployee) return false;
       
@@ -412,7 +448,9 @@ export const App: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{getPageTitle()}</h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your ISP operations</p>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {currentUser.role === EmployeeRole.CUSTOMER ? 'Manage your account' : 'Manage your ISP operations'}
+                </p>
               </div>
               {shouldShowAddButton() && (
                 <button 

@@ -1,3 +1,4 @@
+
 import { supabase } from './supabaseClient';
 import { Ticket } from '../types';
 
@@ -24,6 +25,27 @@ export const fetchTickets = async (): Promise<Ticket[]> => {
     throw error;
   }
   return data as Ticket[];
+};
+
+export const fetchTicket = async (id: string): Promise<Ticket | null> => {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select('*, customer:customers(*)')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST200' || error.message?.includes('relationship')) {
+        const { data: simpleData } = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('id', id)
+        .single();
+        return simpleData as Ticket;
+    }
+    return null;
+  }
+  return data as Ticket;
 };
 
 export const createTicket = async (ticket: Omit<Ticket, 'id' | 'created_at' | 'customer'>): Promise<Ticket> => {

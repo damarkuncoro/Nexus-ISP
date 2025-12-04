@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
-import { Customer, Invoice, InvoiceStatus, SubscriptionPlan } from '../types';
+import { Customer, Invoice, InvoiceStatus, SubscriptionPlan, EmployeeRole } from '../types';
 import { useBilling } from '../hooks/useBilling';
 import { formatCurrency } from '../utils/formatters';
-import { FileText, CreditCard, Plus, Download, Landmark } from 'lucide-react';
+import { FileText, CreditCard, Plus, Download, Landmark, DollarSign } from 'lucide-react';
 import { InvoiceStatusBadge } from './StatusBadges';
 import { InvoiceDetailModal } from './modals/InvoiceDetailModal';
 import { downloadInvoice } from '../utils/invoiceGenerator';
@@ -15,6 +15,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { EmptyState } from './ui/empty-state';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BillingSectionProps {
   customer: Customer;
@@ -32,6 +33,7 @@ const formatDate = (dateStr: string) => {
 
 export const BillingSection: React.FC<BillingSectionProps> = ({ customer, currency, plans }) => {
   const toast = useToast();
+  const { currentUser } = useAuth();
   const { 
     invoices, 
     paymentMethods, 
@@ -46,6 +48,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const currentPlan = plans.find(p => p.id === customer.plan_id);
+  const isCustomerView = currentUser?.role === EmployeeRole.CUSTOMER;
 
   useEffect(() => {
     loadBillingData();
@@ -84,6 +87,15 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
     }
   };
 
+  const handlePayInvoice = async (invoice: Invoice) => {
+      // Simulate Payment Gateway
+      toast.info("Redirecting to secure payment gateway...");
+      setTimeout(() => {
+          handleUpdateStatus(invoice.id, InvoiceStatus.PAID);
+          toast.success("Payment successful! Invoice cleared.");
+      }, 1500);
+  };
+
   const handleAddMethod = async (data: { type: 'credit_card' | 'bank_transfer'; last_four: string; expiry_date?: string; bank_name?: string }) => {
       await addMethod(data);
   };
@@ -97,10 +109,12 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
                     <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">Billing History & Invoices</h3>
                 </Flex>
-                <Button size="sm" onClick={handleGenerateInvoice} isLoading={isGenerating}>
-                    <Plus className="w-3 h-3 mr-1" />
-                    Generate Invoice
-                </Button>
+                {!isCustomerView && (
+                    <Button size="sm" onClick={handleGenerateInvoice} isLoading={isGenerating}>
+                        <Plus className="w-3 h-3 mr-1" />
+                        Generate Invoice
+                    </Button>
+                )}
             </Flex>
 
             {invoices.length === 0 ? (
@@ -108,7 +122,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
                     <EmptyState 
                         icon={FileText}
                         title="No invoices found"
-                        message="Generate the first invoice for this customer to get started."
+                        message={isCustomerView ? "You have no invoices yet." : "Generate the first invoice for this customer to get started."}
                     />
                 </div>
             ) : (
@@ -132,9 +146,16 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
                                 <TableCell>{formatDate(invoice.due_date)}</TableCell>
                                 <TableCell className="text-right font-mono">{formatCurrency(invoice.amount, currency)}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); downloadInvoice(invoice, customer, currency); }}>
-                                        <Download className="w-4 h-4" />
-                                    </Button>
+                                    <div className="flex justify-end gap-2">
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); downloadInvoice(invoice, customer, currency); }}>
+                                            <Download className="w-4 h-4" />
+                                        </Button>
+                                        {isCustomerView && invoice.status !== InvoiceStatus.PAID && invoice.status !== InvoiceStatus.CANCELLED && (
+                                            <Button size="sm" className="h-8 px-2" onClick={(e) => { e.stopPropagation(); handlePayInvoice(invoice); }}>
+                                                Pay
+                                            </Button>
+                                        )}
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -171,7 +192,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
                     <EmptyState 
                         icon={CreditCard}
                         title="No payment methods"
-                        message="Add a payment method for this customer."
+                        message="Add a payment method for easier billing."
                     />
                 )}
             </div>
@@ -186,6 +207,8 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
             onClose={() => setSelectedInvoice(null)}
             onUpdateStatus={handleUpdateStatus}
             onDownload={(inv) => downloadInvoice(inv, customer, currency)}
+            isCustomerView={isCustomerView}
+            onPay={() => handlePayInvoice(selectedInvoice)}
           />
       )}
 

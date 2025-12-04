@@ -1,10 +1,11 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Ticket, AuditAction } from '../types';
-import { fetchTickets, createTicket, updateTicket, deleteTicket } from '../services/ticketService';
+import { fetchTickets, createTicket, updateTicket, deleteTicket, fetchTicket } from '../services/ticketService';
 import { logAction } from '../services/auditService';
 import { getSafeErrorMessage } from '../utils/errorHelpers';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
 
 export const useTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -26,9 +27,48 @@ export const useTickets = () => {
     }
   }, []);
 
+  // Realtime Subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:tickets')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tickets' },
+        async (payload) => {
+          if (payload.eventType === 'INSERT') {
+            // When a ticket is inserted, the payload doesn't have the customer relation.
+            // We must fetch the full object to display it correctly.
+            const newTicket = await fetchTicket(payload.new.id);
+            if (newTicket) {
+              setTickets((prev) => {
+                if (prev.find((t) => t.id === newTicket.id)) return prev;
+                return [newTicket, ...prev];
+              });
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedTicket = await fetchTicket(payload.new.id);
+            if (updatedTicket) {
+              setTickets((prev) =>
+                prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t))
+              );
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setTickets((prev) => prev.filter((t) => t.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const addTicket = async (ticketData: Omit<Ticket, 'id' | 'created_at' | 'customer'>) => {
     try {
       const newTicket = await createTicket(ticketData);
+      // We rely on realtime for the update, but setting it here provides immediate feedback
+      // The realtime handler has a duplicate check to prevent double-adding
       setTickets(prev => [newTicket, ...prev]);
       
       if (currentUser) {

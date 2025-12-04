@@ -19,9 +19,13 @@ interface InvoiceDetailModalProps {
   onClose: () => void;
   onUpdateStatus: (id: string, status: InvoiceStatus) => void;
   onDownload: (invoice: Invoice) => void;
+  isCustomerView?: boolean;
+  onPay?: () => void;
 }
 
-export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice, customer, currency, onClose, onUpdateStatus, onDownload }) => {
+export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ 
+    invoice, customer, currency, onClose, onUpdateStatus, onDownload, isCustomerView = false, onPay 
+}) => {
   
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(undefined, { 
@@ -114,7 +118,8 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice,
              </Flex>
              
              <Flex gap={2} justify="end" className="w-full sm:w-auto">
-                {invoice.status === InvoiceStatus.PENDING || invoice.status === InvoiceStatus.OVERDUE ? (
+                {/* Admin Actions */}
+                {!isCustomerView && (invoice.status === InvoiceStatus.PENDING || invoice.status === InvoiceStatus.OVERDUE) && (
                    <>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -140,7 +145,14 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({ invoice,
                          Mark Paid
                       </Button>
                    </>
-                ) : null}
+                )}
+
+                {/* Customer Actions */}
+                {isCustomerView && (invoice.status === InvoiceStatus.PENDING || invoice.status === InvoiceStatus.OVERDUE) && (
+                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={onPay}>
+                        Pay Now
+                    </Button>
+                )}
                 
                 {invoice.status === InvoiceStatus.PAID && (
                    <span className="flex items-center text-green-600 dark:text-green-400 text-sm font-medium">

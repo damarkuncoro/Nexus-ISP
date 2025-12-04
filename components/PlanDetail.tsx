@@ -2,7 +2,7 @@
 import React from 'react';
 import { SubscriptionPlan, Customer } from '../types';
 import { formatCurrency } from '../utils/formatters';
-import { ArrowLeft, Users, Wifi, TrendingUp, Trash2, Edit2, Mail, MapPin } from 'lucide-react';
+import { Users, Wifi, TrendingUp, Trash2, Edit2, Mail, MapPin, ArrowDown, ArrowUp } from 'lucide-react';
 import { CustomerStatusBadge } from './StatusBadges';
 import { Flex } from './ui/flex';
 import { Grid } from './ui/grid';
@@ -10,6 +10,7 @@ import { Button } from './ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/table';
 import { useAuth } from '../contexts/AuthContext';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { DetailHero, StatCard, DetailSection, PageHeader } from './blocks/DetailBlocks';
 
 interface PlanDetailProps {
   plan: SubscriptionPlan;
@@ -37,37 +38,17 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
       
-      <Flex direction="col" justify="between" gap={4} className="sm:flex-row sm:items-center border-b border-gray-200 dark:border-slate-700 pb-6">
-        <Flex align="center" gap={4}>
-          <Button 
-            onClick={onBack} 
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-gray-100 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </Button>
-          <div>
-             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{plan.name}</h1>
-             <Flex as="p" align="center" gap={2} className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                <span className="font-medium text-primary-600 dark:text-primary-400">{formatCurrency(plan.price, currency)}/mo</span>
-                <span className="text-gray-300 dark:text-slate-600">•</span>
-                <span>{plan.download_speed} ↓ / {plan.upload_speed} ↑</span>
-             </Flex>
-          </div>
-        </Flex>
-        
-        <Flex gap={2}>
+      <PageHeader onBack={onBack} actions={
+         <>
            {hasPermission('manage_settings') && (
             <Button variant="outline" onClick={() => onEdit(plan)}>
-              <Edit2 className="w-4 h-4 mr-2" />
-              Edit
+              <Edit2 className="w-4 h-4 mr-2" /> Edit Plan
             </Button>
            )}
            {hasPermission('delete_records') && (
              <AlertDialog>
                <AlertDialogTrigger asChild>
-                 <Button variant="destructive"><Trash2 className="w-4 h-4 mr-2" />Delete</Button>
+                 <Button variant="destructive"><Trash2 className="w-4 h-4 mr-2" /> Delete</Button>
                </AlertDialogTrigger>
                <AlertDialogContent>
                  <AlertDialogHeader><AlertDialogTitle>Delete Plan?</AlertDialogTitle><AlertDialogDescription>This will remove the plan. Existing subscribers will not be affected but new ones cannot be assigned.</AlertDialogDescription></AlertDialogHeader>
@@ -75,44 +56,34 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
                </AlertDialogContent>
              </AlertDialog>
            )}
-        </Flex>
-      </Flex>
+         </>
+      } />
+
+      <DetailHero 
+        title={plan.name}
+        subtitle="Broadband Service Package"
+        avatarFallback="P"
+        roleIcon={Wifi}
+        status={<span className="text-xl font-bold text-primary-600 dark:text-primary-400">{formatCurrency(plan.price, currency)}<span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mo</span></span>}
+        metadata={
+            <div className="flex gap-6 mt-1">
+                <Flex align="center" gap={2} className="px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg border border-green-100 dark:border-green-800">
+                    <ArrowDown className="w-4 h-4" /> {plan.download_speed} Download
+                </Flex>
+                <Flex align="center" gap={2} className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-800">
+                    <ArrowUp className="w-4 h-4" /> {plan.upload_speed} Upload
+                </Flex>
+            </div>
+        }
+      />
 
       <Grid cols={1} className="md:grid-cols-3" gap={6}>
-        <Flex align="center" gap={4} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                <Users className="w-6 h-6" />
-            </div>
-            <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Subscribers</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{planCustomers.length}</p>
-            </div>
-        </Flex>
-        <Flex align="center" gap={4} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
-                <TrendingUp className="w-6 h-6" />
-            </div>
-            <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Revenue</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(monthlyRevenue, currency)}</p>
-            </div>
-        </Flex>
-        <Flex align="center" gap={4} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
-            <div className="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
-                <Wifi className="w-6 h-6" />
-            </div>
-            <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Service Type</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">Fiber Optic</p>
-            </div>
-        </Flex>
+        <StatCard label="Active Subscribers" value={planCustomers.length} icon={Users} color="blue" />
+        <StatCard label="Monthly Revenue" value={formatCurrency(monthlyRevenue, currency)} icon={TrendingUp} color="green" />
+        <StatCard label="Service Type" value="Fiber Optic" icon={Wifi} color="purple" />
       </Grid>
 
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Assigned Customers</h3>
-        </div>
-        
+      <DetailSection title="Assigned Customers" icon={Users}>
         {planCustomers.length === 0 ? (
            <div className="p-12 text-center text-gray-500 dark:text-gray-400">
               No customers are currently assigned to this plan.
@@ -158,7 +129,7 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
                 </TableBody>
             </Table>
         )}
-      </div>
+      </DetailSection>
 
     </div>
   );

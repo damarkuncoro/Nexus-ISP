@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield, Package, CircleDollarSign, Search, Map, Moon, Sun, BookOpen, BarChart3, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Ticket as TicketIcon, Settings, Menu, X, Bell, Users, Wifi, Server, Briefcase, ChevronDown, User, Shield, Package, CircleDollarSign, Search, Map, Moon, Sun, BookOpen, BarChart3, UserCircle, HelpCircle, FileText } from 'lucide-react';
 import { APP_NAME } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
@@ -21,11 +21,16 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   const { currentUser, loginAs, hasPermission } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
+  const isCustomer = currentUser?.role === EmployeeRole.CUSTOMER;
+
   const NavItem: React.FC<{ view: 'dashboard' | 'tickets' | 'customers' | 'plans' | 'network' | 'settings' | 'employees' | 'alerts' | 'inventory' | 'finance' | 'map' | 'kb' | 'reports', icon: any, label: string }> = ({ view, icon: Icon, label }) => {
-    if (view === 'settings' && !hasPermission('manage_settings')) return null;
-    if (view === 'employees' && !hasPermission('manage_team')) return null;
-    if (view === 'inventory' && !hasPermission('manage_network') && !hasPermission('view_billing')) return null;
-    if ((view === 'finance' || view === 'reports') && !hasPermission('view_billing')) return null;
+    // Permission checks for employee views
+    if (!isCustomer) {
+        if (view === 'settings' && !hasPermission('manage_settings')) return null;
+        if (view === 'employees' && !hasPermission('manage_team')) return null;
+        if (view === 'inventory' && !hasPermission('manage_network') && !hasPermission('view_billing')) return null;
+        if ((view === 'finance' || view === 'reports') && !hasPermission('view_billing')) return null;
+    }
     
     return (
       <button
@@ -55,9 +60,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
   const handleRoleSwitch = (role: EmployeeRole) => {
     loginAs(role);
     setIsProfileMenuOpen(false);
-    if (role === EmployeeRole.SUPPORT && (currentView === 'settings' || currentView === 'employees' || currentView === 'network' || currentView === 'inventory' || currentView === 'reports')) {
-        onViewChange('dashboard');
-    }
+    onViewChange('dashboard');
   };
 
   const getRoleColor = (role?: EmployeeRole) => {
@@ -65,37 +68,57 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
           case EmployeeRole.ADMIN: return 'bg-purple-600 text-white';
           case EmployeeRole.MANAGER: return 'bg-blue-600 text-white';
           case EmployeeRole.TECHNICIAN: return 'bg-orange-600 text-white';
+          case EmployeeRole.CUSTOMER: return 'bg-indigo-600 text-white';
           default: return 'bg-green-600 text-white';
       }
   };
 
-  const NavigationContent = () => (
-    <>
-      <NavGroup>
-        <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
-      </NavGroup>
+  const NavigationContent = () => {
+    if (isCustomer) {
+        return (
+            <>
+                <NavGroup>
+                    <NavItem view="dashboard" icon={LayoutDashboard} label="My Dashboard" />
+                </NavGroup>
+                <NavGroup title="Services">
+                    <NavItem view="finance" icon={CircleDollarSign} label="My Bills" />
+                    <NavItem view="tickets" icon={TicketIcon} label="My Tickets" />
+                </NavGroup>
+                <NavGroup title="Support">
+                    <NavItem view="kb" icon={BookOpen} label="Help Center" />
+                </NavGroup>
+            </>
+        );
+    }
 
-      <NavGroup title="Operations">
-        <NavItem view="alerts" icon={Bell} label="NOC Alerts" />
-        <NavItem view="map" icon={Map} label="Coverage Map" />
-        <NavItem view="tickets" icon={TicketIcon} label="Helpdesk" />
-        <NavItem view="network" icon={Server} label="Network Devices" />
-      </NavGroup>
+    return (
+        <>
+        <NavGroup>
+            <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
+        </NavGroup>
 
-      <NavGroup title="Business">
-        <NavItem view="customers" icon={Users} label="Subscribers" />
-        <NavItem view="plans" icon={Wifi} label="Service Plans" />
-        <NavItem view="finance" icon={CircleDollarSign} label="Finance" />
-        <NavItem view="reports" icon={BarChart3} label="Analytics" />
-      </NavGroup>
+        <NavGroup title="Operations">
+            <NavItem view="alerts" icon={Bell} label="NOC Alerts" />
+            <NavItem view="map" icon={Map} label="Coverage Map" />
+            <NavItem view="tickets" icon={TicketIcon} label="Helpdesk" />
+            <NavItem view="network" icon={Server} label="Network Devices" />
+        </NavGroup>
 
-      <NavGroup title="Resources">
-        <NavItem view="inventory" icon={Package} label="Warehouse" />
-        <NavItem view="kb" icon={BookOpen} label="Knowledge Base" />
-        <NavItem view="employees" icon={Briefcase} label="Team" />
-      </NavGroup>
-    </>
-  );
+        <NavGroup title="Business">
+            <NavItem view="customers" icon={Users} label="Subscribers" />
+            <NavItem view="plans" icon={Wifi} label="Service Plans" />
+            <NavItem view="finance" icon={CircleDollarSign} label="Finance" />
+            <NavItem view="reports" icon={BarChart3} label="Analytics" />
+        </NavGroup>
+
+        <NavGroup title="Resources">
+            <NavItem view="inventory" icon={Package} label="Warehouse" />
+            <NavItem view="kb" icon={BookOpen} label="Knowledge Base" />
+            <NavItem view="employees" icon={Briefcase} label="Team" />
+        </NavGroup>
+        </>
+    );
+  };
 
   // Trigger Command Palette via fake keyboard event if clicked
   const triggerCommandPalette = () => {
@@ -113,10 +136,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
       <Flex as="aside" direction="col" className="hidden md:flex w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 fixed h-full z-10 transition-colors duration-200">
         <Flex align="center" className="h-16 px-6 border-b border-gray-100 dark:border-slate-800 flex-shrink-0">
           <Flex align="center" gap={2}>
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold ${isCustomer ? 'bg-indigo-600' : 'bg-primary-600'}`}>
               N
             </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Nexus ISP</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">{isCustomer ? 'My Nexus' : 'Nexus ISP'}</span>
           </Flex>
         </Flex>
         
@@ -125,7 +148,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
         </FlexItem>
 
         <div className="p-4 border-t border-gray-100 dark:border-slate-800 flex-shrink-0">
-          <NavItem view="settings" icon={Settings} label="Settings" />
+          {!isCustomer && <NavItem view="settings" icon={Settings} label="Settings" />}
         </div>
       </Flex>
       
@@ -135,8 +158,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
             {/* Mobile Header */}
             <Flex align="center" justify="between" className="md:hidden h-16 px-4">
               <Flex align="center" gap={2}>
-                <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold">N</div>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">Nexus ISP</span>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold ${isCustomer ? 'bg-indigo-600' : 'bg-primary-600'}`}>N</div>
+                <span className="text-lg font-bold text-gray-900 dark:text-white">{isCustomer ? 'My Nexus' : 'Nexus ISP'}</span>
               </Flex>
               <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-gray-600 dark:text-gray-400"><Menu /></button>
             </Flex>
@@ -144,13 +167,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
             {/* Top Navbar (Desktop) */}
             <Flex align="center" justify="between" className="hidden md:flex h-16 px-8">
               <div className="w-64">
-                  <button 
-                    onClick={triggerCommandPalette}
-                    className="w-full flex items-center justify-between bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 text-sm rounded-lg px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                  >
-                      <span className="flex items-center gap-2"><Search className="w-4 h-4" /> Search...</span>
-                      <span className="text-xs bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 px-1.5 py-0.5 rounded shadow-sm">⌘K</span>
-                  </button>
+                  {!isCustomer && (
+                    <button 
+                        onClick={triggerCommandPalette}
+                        className="w-full flex items-center justify-between bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-500 dark:text-gray-400 text-sm rounded-lg px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <span className="flex items-center gap-2"><Search className="w-4 h-4" /> Search...</span>
+                        <span className="text-xs bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 px-1.5 py-0.5 rounded shadow-sm">⌘K</span>
+                    </button>
+                  )}
               </div>
               
               <Flex align="center" gap={4}>
@@ -209,6 +234,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
                                 <button onClick={() => handleRoleSwitch(EmployeeRole.TECHNICIAN)} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg flex items-center gap-2">
                                     <Server className="w-4 h-4 text-orange-600" /> Technician
                                 </button>
+                                <button onClick={() => handleRoleSwitch(EmployeeRole.CUSTOMER)} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg flex items-center gap-2">
+                                    <User className="w-4 h-4 text-indigo-600" /> Customer
+                                </button>
                             </div>
                         </div>
                     )}
@@ -223,9 +251,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
               <div className="bg-white dark:bg-slate-900 w-full h-auto pb-6 shadow-xl rounded-b-2xl animate-in slide-in-from-top-4 duration-300 overflow-y-auto max-h-[80vh]">
                 <div className="px-4 py-4 space-y-1">
                   <NavigationContent />
-                  <div className="border-t border-gray-100 dark:border-slate-800 my-2 pt-2">
-                    <NavItem view="settings" icon={Settings} label="Settings" />
-                  </div>
+                  {!isCustomer && (
+                    <div className="border-t border-gray-100 dark:border-slate-800 my-2 pt-2">
+                        <NavItem view="settings" icon={Settings} label="Settings" />
+                    </div>
+                  )}
                   <div className="border-t border-gray-100 dark:border-slate-800 my-2 pt-4 px-4 flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Dark Mode</span>
                       <button onClick={toggleTheme} className="p-2 bg-gray-100 dark:bg-slate-800 rounded-full">

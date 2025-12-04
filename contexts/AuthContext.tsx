@@ -26,7 +26,8 @@ const PERMISSIONS: Record<EmployeeRole, Permission[]> = {
   [EmployeeRole.ADMIN]: ['manage_team', 'manage_settings', 'manage_network', 'delete_records', 'view_billing'],
   [EmployeeRole.MANAGER]: ['manage_team', 'delete_records', 'view_billing'],
   [EmployeeRole.TECHNICIAN]: ['manage_network'],
-  [EmployeeRole.SUPPORT]: ['view_billing'] // Support can view but mostly just read/write tickets/customers
+  [EmployeeRole.SUPPORT]: ['view_billing'], // Support can view but mostly just read/write tickets/customers
+  [EmployeeRole.CUSTOMER]: [] // Customers have no admin permissions
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,6 +68,14 @@ const MOCK_USERS: Record<EmployeeRole, User> = {
     status: EmployeeStatus.ACTIVE,
     department: 'Field Ops',
     created_at: new Date().toISOString()
+  },
+  [EmployeeRole.CUSTOMER]: {
+    id: 'cust-demo-1',
+    name: 'Alice Subscriber',
+    email: 'alice@example.com',
+    role: EmployeeRole.CUSTOMER,
+    status: EmployeeStatus.ACTIVE,
+    created_at: new Date().toISOString()
   }
 };
 
@@ -90,7 +99,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const hasPermission = (permission: Permission): boolean => {
     if (!currentUser) return false;
-    return PERMISSIONS[currentUser.role].includes(permission);
+    return PERMISSIONS[currentUser.role]?.includes(permission) || false;
   };
 
   return (

@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { EmployeeRole } from '../types';
-import { Eye, EyeOff, Lock, Mail, Shield, Wrench, Headphones, Briefcase, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Shield, Wrench, Headphones, Briefcase, ArrowRight, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Flex } from './ui/flex';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 
 export const LoginView = () => {
   const { loginAs } = useAuth();
@@ -23,6 +24,15 @@ export const LoginView = () => {
         loginAs(EmployeeRole.ADMIN);
         setIsLoading(false);
     }, 800);
+  };
+
+  const handleClientLogin = (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
+      setTimeout(() => {
+          loginAs(EmployeeRole.CUSTOMER);
+          setIsLoading(false);
+      }, 800);
   };
 
   const handleQuickLogin = (role: EmployeeRole) => {
@@ -60,65 +70,94 @@ export const LoginView = () => {
               <div className="text-center lg:text-left">
                   <div className="lg:hidden w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">N</div>
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome back</h2>
-                  <p className="mt-2 text-gray-500 dark:text-gray-400">Please enter your credentials to access the dashboard.</p>
+                  <p className="mt-2 text-gray-500 dark:text-gray-400">Please enter your credentials to access the system.</p>
               </div>
 
-              <form onSubmit={handleLogin} className="space-y-5">
-                  <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input 
-                            id="email" 
-                            type="email" 
-                            placeholder="admin@nexus-isp.com" 
-                            className="pl-10 h-11"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                          />
+              <Tabs defaultValue="staff" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                      <TabsTrigger value="staff">Staff Portal</TabsTrigger>
+                      <TabsTrigger value="client">Client Portal</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="staff">
+                      <form onSubmit={handleLogin} className="space-y-5">
+                          <div className="space-y-2">
+                              <Label htmlFor="email">Work Email</Label>
+                              <div className="relative">
+                                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                  <Input 
+                                    id="email" 
+                                    type="email" 
+                                    placeholder="admin@nexus-isp.com" 
+                                    className="pl-10 h-11"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                  />
+                              </div>
+                          </div>
+                          <div className="space-y-2">
+                              <Flex justify="between">
+                                  <Label htmlFor="password">Password</Label>
+                                  <a href="#" className="text-xs text-primary-600 hover:text-primary-500 font-medium">Forgot password?</a>
+                              </Flex>
+                              <div className="relative">
+                                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                                  <Input 
+                                    id="password" 
+                                    type={showPassword ? "text" : "password"} 
+                                    placeholder="••••••••" 
+                                    className="pl-10 pr-10 h-11"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                  />
+                                  <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                  >
+                                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  </button>
+                              </div>
+                          </div>
+
+                          <Button type="submit" className="w-full h-11 text-base shadow-lg shadow-primary-500/20" isLoading={isLoading}>
+                              Sign in to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                      </form>
+
+                      <div className="relative py-4">
+                          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200 dark:border-slate-800" /></div>
+                          <div className="relative flex justify-center text-xs uppercase"><span className="bg-gray-50 dark:bg-slate-950 px-2 text-gray-500">Quick Access (Demo)</span></div>
                       </div>
-                  </div>
-                  <div className="space-y-2">
-                      <Flex justify="between">
-                          <Label htmlFor="password">Password</Label>
-                          <a href="#" className="text-xs text-primary-600 hover:text-primary-500 font-medium">Forgot password?</a>
-                      </Flex>
-                      <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input 
-                            id="password" 
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            className="pl-10 pr-10 h-11"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                          />
-                          <button 
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 focus:outline-none"
-                          >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
+
+                      <div className="grid grid-cols-2 gap-3">
+                          <QuickLoginBtn label="Admin" role={EmployeeRole.ADMIN} icon={Shield} color="bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800" onClick={handleQuickLogin} />
+                          <QuickLoginBtn label="Manager" role={EmployeeRole.MANAGER} icon={Briefcase} color="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800" onClick={handleQuickLogin} />
+                          <QuickLoginBtn label="Support" role={EmployeeRole.SUPPORT} icon={Headphones} color="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800" onClick={handleQuickLogin} />
+                          <QuickLoginBtn label="Tech" role={EmployeeRole.TECHNICIAN} icon={Wrench} color="bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800" onClick={handleQuickLogin} />
                       </div>
-                  </div>
+                  </TabsContent>
 
-                  <Button type="submit" className="w-full h-11 text-base shadow-lg shadow-primary-500/20" isLoading={isLoading}>
-                      Sign in to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-              </form>
-
-              <div className="relative py-2">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200 dark:border-slate-800" /></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-gray-50 dark:bg-slate-950 px-2 text-gray-500">Or simulate role</span></div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                  <QuickLoginBtn label="Admin" role={EmployeeRole.ADMIN} icon={Shield} color="bg-purple-50 text-purple-700 hover:bg-purple-100 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800" onClick={handleQuickLogin} />
-                  <QuickLoginBtn label="Manager" role={EmployeeRole.MANAGER} icon={Briefcase} color="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800" onClick={handleQuickLogin} />
-                  <QuickLoginBtn label="Support" role={EmployeeRole.SUPPORT} icon={Headphones} color="bg-green-50 text-green-700 hover:bg-green-100 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800" onClick={handleQuickLogin} />
-                  <QuickLoginBtn label="Tech" role={EmployeeRole.TECHNICIAN} icon={Wrench} color="bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800" onClick={handleQuickLogin} />
-              </div>
+                  <TabsContent value="client">
+                      <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-gray-200 dark:border-slate-800 text-center space-y-6">
+                          <div className="bg-primary-50 dark:bg-primary-900/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                              <User className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                          </div>
+                          <div>
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Customer Self-Service</h3>
+                              <p className="text-sm text-gray-500 mt-1">View your bills, check usage, and contact support.</p>
+                          </div>
+                          
+                          <Button onClick={handleClientLogin} className="w-full h-11 text-base" isLoading={isLoading}>
+                              Login as Demo Customer
+                          </Button>
+                          
+                          <p className="text-xs text-gray-400">
+                              Simulates a login for "Alice Subscriber"
+                          </p>
+                      </div>
+                  </TabsContent>
+              </Tabs>
           </div>
       </div>
     </div>

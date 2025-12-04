@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { NetworkDevice, DeviceStatus, DeviceType, Subnet } from '../types';
-import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle, Trash2, Edit2, Grid as GridIcon, List, Hash, Network, Share2 } from 'lucide-react';
+import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle, Trash2, Edit2, Grid as GridIcon, List, Hash, Network, Share2, Megaphone, MoreHorizontal } from 'lucide-react';
 import { DeviceStatusBadge } from './StatusBadges';
 import { Grid, GridItem } from './ui/grid';
 import { Flex } from './ui/flex';
@@ -8,12 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/table';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubnets } from '../hooks/useSubnets';
 import { SubnetForm } from './forms/SubnetForm';
 import { EmptyState } from './ui/empty-state';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { useToast } from '../contexts/ToastContext';
+import { OutageModal } from './modals/OutageModal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 interface NetworkViewProps {
   devices: NetworkDevice[];
@@ -23,7 +27,7 @@ interface NetworkViewProps {
   onRefresh: () => void;
 }
 
-const DeviceIcon = ({ type, className = "w-6 h-6" }: { type: DeviceType, className?: string }) => {
+const DeviceIcon = ({ type, className = "w-5 h-5" }: { type: DeviceType, className?: string }) => {
   const icons = {
     [DeviceType.ROUTER]: Router,
     [DeviceType.SWITCH]: Box,
@@ -49,6 +53,9 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
   const [selectedSubnet, setSelectedSubnet] = useState<Subnet | null>(null);
   const [editingSubnet, setEditingSubnet] = useState<Subnet | undefined>(undefined);
   
+  // Outage Modal State
+  const [outageDevice, setOutageDevice] = useState<NetworkDevice | null>(null);
+  
   const { subnets, loadSubnets, addSubnet, editSubnet, removeSubnet } = useSubnets();
   const { hasPermission } = useAuth();
   const toast = useToast();
@@ -57,7 +64,6 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
       loadSubnets();
   }, [loadSubnets]);
 
-  // Set default subnet on load
   useEffect(() => {
       if (subnets.length > 0 && !selectedSubnet) {
           setSelectedSubnet(subnets[0]);
@@ -77,58 +83,41 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
     warning: devices.filter(d => d.status === DeviceStatus.WARNING).length
   };
 
-  // IPAM Grid Calculation
   const ipamData = useMemo(() => {
       if (!selectedSubnet) return { grid: [], utilization: 0, usedCount: 0, freeCount: 0 };
-
-      // Basic support for /24 visualization
       const cidrParts = selectedSubnet.cidr.split('/');
       const ipParts = cidrParts[0].split('.');
       const prefix = `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.`;
-      
-      // Collect all IPs from devices and their interfaces
       const usedIpsMap = new Map<string, { deviceName: string, type: string, device: NetworkDevice }>();
-      
       devices.forEach(d => {
           if (d.ip_address) usedIpsMap.set(d.ip_address, { deviceName: d.name, type: 'Device IP', device: d });
           d.interfaces?.forEach(intf => {
               if (intf.ip_address) usedIpsMap.set(intf.ip_address, { deviceName: `${d.name} (${intf.name})`, type: 'Interface IP', device: d });
           });
       });
-
       const grid = Array.from({ length: 256 }, (_, i) => {
           const ip = `${prefix}${i}`;
           const usage = usedIpsMap.get(ip);
-          
           let status = 'free';
           if (i === 0) status = 'network';
           if (i === 255) status = 'broadcast';
           if (ip === selectedSubnet.gateway) status = 'gateway';
           if (usage) status = 'used';
-          
           return { id: i, ip, status, usage };
       });
-
       const usedCount = grid.filter(g => g.status === 'used').length;
       const utilization = Math.round((usedCount / 254) * 100);
-
       return { grid, utilization, usedCount, freeCount: 254 - usedCount };
   }, [devices, selectedSubnet]);
 
-  // Topology Data Calculation
   const topologyData = useMemo(() => {
       return subnets.map(subnet => {
-          const cidrParts = subnet.cidr.split('/');
-          // Simplified matching: check if IP starts with first 3 octets
-          // In a real app, use a proper CIDR library
           const prefix = subnet.cidr.split('.').slice(0, 3).join('.');
-          
           const connectedDevices = devices.filter(d => {
               const deviceIpMatch = d.ip_address.startsWith(prefix);
               const interfaceMatch = d.interfaces?.some(intf => intf.ip_address?.startsWith(prefix));
               return deviceIpMatch || interfaceMatch;
           });
-
           return {
               subnet,
               devices: connectedDevices,
@@ -153,75 +142,31 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
       }
   };
 
-  const handleEditSubnetClick = (subnet: Subnet) => {
-      setEditingSubnet(subnet);
-      setShowSubnetForm(true);
-  };
+  const handleEditSubnetClick = (subnet: Subnet) => { setEditingSubnet(subnet); setShowSubnetForm(true); };
+  const handleAddSubnetClick = () => { setEditingSubnet(undefined); setShowSubnetForm(true); };
+  const handleDeleteSubnet = async (id: string) => { try { await removeSubnet(id); toast.success("Subnet deleted"); if (selectedSubnet?.id === id) setSelectedSubnet(null); } catch (e: any) { toast.error(e.message); } };
+  const handleIpClick = (cell: any) => { if (cell.usage) { onEditDevice(cell.usage.device); } else if (cell.status === 'free') { if (hasPermission('manage_network')) { onAddDevice({ ip_address: cell.ip, location: selectedSubnet?.location }); } } };
 
-  const handleAddSubnetClick = () => {
-      setEditingSubnet(undefined);
-      setShowSubnetForm(true);
-  };
-
-  const handleDeleteSubnet = async (id: string) => {
-      try {
-          await removeSubnet(id);
-          toast.success("Subnet deleted");
-          if (selectedSubnet?.id === id) setSelectedSubnet(null);
-      } catch (e: any) {
-          toast.error(e.message);
-      }
-  };
-
-  const handleIpClick = (cell: any) => {
-      if (cell.usage) {
-          // Edit existing device
-          onEditDevice(cell.usage.device);
-      } else if (cell.status === 'free') {
-          // Provision new device on this IP
-          if (hasPermission('manage_network')) {
-              onAddDevice({ 
-                  ip_address: cell.ip,
-                  location: selectedSubnet?.location
-              });
-          }
-      }
-  };
-
-  if (showSubnetForm) {
-      return <SubnetForm onClose={() => setShowSubnetForm(false)} onSubmit={handleSaveSubnet} initialData={editingSubnet} />;
-  }
+  if (showSubnetForm) return <SubnetForm onClose={() => setShowSubnetForm(false)} onSubmit={handleSaveSubnet} initialData={editingSubnet} />;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
       <Grid cols={1} className="md:grid-cols-4" gap={4}>
          <Flex align="center" justify="between" className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
-            <div>
-               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Total Devices</p>
-               <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-            </div>
+            <div><p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Total Devices</p><p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p></div>
             <div className="p-3 bg-gray-100 dark:bg-slate-700 rounded-lg"><Server className="w-5 h-5 text-gray-500 dark:text-gray-300" /></div>
          </Flex>
          <Flex align="center" justify="between" className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
-            <div>
-               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Online</p>
-               <p className="text-2xl font-bold text-green-600 dark:text-green-500">{stats.online}</p>
-            </div>
+            <div><p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Online</p><p className="text-2xl font-bold text-green-600 dark:text-green-500">{stats.online}</p></div>
             <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg"><CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" /></div>
          </Flex>
          <Flex align="center" justify="between" className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
-            <div>
-               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Offline</p>
-               <p className="text-2xl font-bold text-red-600 dark:text-red-500">{stats.offline}</p>
-            </div>
+            <div><p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Offline</p><p className="text-2xl font-bold text-red-600 dark:text-red-500">{stats.offline}</p></div>
             <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg"><AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400" /></div>
          </Flex>
          <Flex align="center" justify="between" className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
-            <div>
-               <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Warning</p>
-               <p className="text-2xl font-bold text-amber-600 dark:text-amber-500">{stats.warning}</p>
-            </div>
+            <div><p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">Warning</p><p className="text-2xl font-bold text-amber-600 dark:text-amber-500">{stats.warning}</p></div>
             <div className="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg"><AlertTriangle className="w-5 h-5 text-amber-500 dark:text-amber-400" /></div>
          </Flex>
       </Grid>
@@ -251,53 +196,99 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
             <CardContent className="p-0">
                 <TabsContent value="list" className="m-0">
                     {filteredDevices.length > 0 ? (
-                        <ul className="divide-y divide-gray-100 dark:divide-slate-700">
-                        {filteredDevices.map(device => (
-                            <li key={device.id}>
-                                <Flex align="center" justify="between" className="px-6 py-4 group">
-                                <Flex align="center" gap={4} className="flex-1 min-w-0">
-                                    <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg"><DeviceIcon type={device.type} /></div>
-                                    <div className="min-w-0">
-                                        <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate">{device.name}</h4>
-                                        <Flex align="center" gap={2} className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            <span className="font-mono bg-gray-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{device.ip_address}</span>
-                                            {device.location && <><span className="text-gray-300">•</span><Flex align="center" gap={1}><MapPin className="w-3 h-3" />{device.location}</Flex></>}
-                                        </Flex>
-                                    </div>
-                                </Flex>
-                                <Flex align="center" gap={4}>
-                                    <DeviceStatusBadge status={device.status} />
-                                    {hasPermission('manage_network') && (
-                                        <Flex gap={1} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEditDevice(device)}>
-                                                <Edit2 className="w-4 h-4" />
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Delete Device?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                    Are you sure you want to remove {device.name}? This cannot be undone.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => onDeleteDevice(device.id)}>Delete</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </Flex>
-                                    )}
-                                </Flex>
-                                </Flex>
-                            </li>
-                        ))}
-                        </ul>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[250px]">Device Name</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>IP Address</TableHead>
+                                    <TableHead>Location</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredDevices.map(device => (
+                                    <TableRow key={device.id} className="group cursor-pointer" onClick={() => onEditDevice(device)}>
+                                        <TableCell>
+                                            <Flex align="center" gap={3}>
+                                                <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg">
+                                                    <DeviceIcon type={device.type} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-gray-900 dark:text-white">{device.name}</p>
+                                                    {device.model && <p className="text-xs text-gray-500">{device.model}</p>}
+                                                </div>
+                                            </Flex>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="capitalize text-sm text-gray-700 dark:text-gray-300">{device.type}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="font-mono text-xs bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">{device.ip_address}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            {device.location ? (
+                                                <Flex align="center" gap={1} className="text-sm text-gray-600 dark:text-gray-400">
+                                                    <MapPin className="w-3 h-3" /> {device.location}
+                                                </Flex>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <DeviceStatusBadge status={device.status} />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Flex justify="end" align="center" gap={2} onClick={(e) => e.stopPropagation()}>
+                                                {(device.status === DeviceStatus.OFFLINE || device.status === DeviceStatus.WARNING) && hasPermission('manage_network') && (
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="outline" 
+                                                        className="h-8 text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20"
+                                                        onClick={() => setOutageDevice(device)}
+                                                    >
+                                                        <Megaphone className="w-3 h-3 mr-1.5" /> Alert
+                                                    </Button>
+                                                )}
+                                                
+                                                {hasPermission('manage_network') && (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                                <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem onClick={() => onEditDevice(device)}>
+                                                                <Edit2 className="w-4 h-4 mr-2" /> Edit Details
+                                                            </DropdownMenuItem>
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                                                        <Trash2 className="w-4 h-4 mr-2 text-red-600" /> <span className="text-red-600">Delete Device</span>
+                                                                    </DropdownMenuItem>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Delete Device?</AlertDialogTitle>
+                                                                        <AlertDialogDescription>Are you sure you want to remove <strong>{device.name}</strong>? This action cannot be undone.</AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                        <AlertDialogAction onClick={() => onDeleteDevice(device.id)}>Delete</AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                )}
+                                            </Flex>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     ) : (
                         <div className="p-6">
                             <EmptyState 
@@ -327,7 +318,7 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                                     <div className="text-center py-6 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg">
                                         <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-2">No subnets defined.</p>
                                         {hasPermission('manage_network') && (
-                                            <Button size="sm" variant="ghost" className="text-xs text-primary-600 dark:text-primary-400" onClick={handleAddSubnetClick}>Create Subnet</Button>
+                                            <Button size="sm" variant="ghost" className="text-xs text-primary-600 dark:text-primary-400" onClick={handleAddSubnetClick}>Create First Subnet</Button>
                                         )}
                                     </div>
                                 )}
@@ -459,7 +450,6 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                                     {/* Connection Lines (SVG Overlay) */}
                                     <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{ overflow: 'visible' }}>
                                         {/* Lines will be drawn conceptually by CSS borders for simplicity in this grid layout */}
-                                        {/* Drawing lines from Center Subnet to Devices below */}
                                     </svg>
 
                                     <div className="flex flex-col items-center z-10 relative">
@@ -519,6 +509,14 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
             </CardContent>
           </Tabs>
       </Card>
+
+      {outageDevice && (
+          <OutageModal 
+            device={outageDevice}
+            isOpen={!!outageDevice}
+            onClose={() => setOutageDevice(null)}
+          />
+      )}
     </div>
   );
 };

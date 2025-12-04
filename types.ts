@@ -90,6 +90,7 @@ export enum EmployeeRole {
   MANAGER = 'manager',
   SUPPORT = 'support',
   TECHNICIAN = 'technician',
+  CUSTOMER = 'customer',
 }
 
 export enum EmployeeStatus {
