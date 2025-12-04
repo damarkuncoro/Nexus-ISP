@@ -9,10 +9,10 @@ interface AlertProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variants = {
-  default: "bg-blue-50 text-blue-900 border-blue-200 [&>svg]:text-blue-600",
-  destructive: "bg-red-50 text-red-900 border-red-200 [&>svg]:text-red-600",
-  success: "bg-green-50 text-green-900 border-green-200 [&>svg]:text-green-600",
-  warning: "bg-amber-50 text-amber-900 border-amber-200 [&>svg]:text-amber-600",
+  default: "bg-blue-50 text-blue-900 border-blue-200 [&>svg]:text-blue-600 dark:bg-blue-900/20 dark:text-blue-100 dark:border-blue-800 dark:[&>svg]:text-blue-400",
+  destructive: "bg-red-50 text-red-900 border-red-200 [&>svg]:text-red-600 dark:bg-red-900/20 dark:text-red-100 dark:border-red-800 dark:[&>svg]:text-red-400",
+  success: "bg-green-50 text-green-900 border-green-200 [&>svg]:text-green-600 dark:bg-green-900/20 dark:text-green-100 dark:border-green-800 dark:[&>svg]:text-green-400",
+  warning: "bg-amber-50 text-amber-900 border-amber-200 [&>svg]:text-amber-600 dark:bg-amber-900/20 dark:text-amber-100 dark:border-amber-800 dark:[&>svg]:text-amber-400",
 };
 
 const icons = {

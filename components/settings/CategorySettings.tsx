@@ -103,11 +103,11 @@ export const CategorySettings: React.FC = () => {
     <Card>
         <CardHeader className="flex-col sm:flex-row justify-between sm:items-center gap-4 py-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2 m-0">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2 m-0">
                   <Tag className="w-5 h-5 text-gray-500" />
                   Ticket Categories & SLA
               </h3>
-              <p className="text-xs text-gray-500 mt-1">Configure service level agreements (SLA) for each category.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Configure service level agreements (SLA) for each category.</p>
             </div>
             {canManage && !isAdding && !editingId && (
               <Flex gap={2}>
@@ -117,7 +117,7 @@ export const CategorySettings: React.FC = () => {
                         size="sm"
                         onClick={handleSeedDefaults}
                         isLoading={loading}
-                        className="bg-white"
+                        className="bg-white dark:bg-slate-700"
                     >
                         <Database className="w-4 h-4 mr-2" />
                         Setup Defaults
@@ -147,7 +147,7 @@ export const CategorySettings: React.FC = () => {
               </TableHeader>
               <TableBody>
                   {isAdding && canManage && (
-                      <TableRow className="bg-blue-50">
+                      <TableRow className="bg-blue-50 dark:bg-blue-900/20">
                           <TableCell><Input placeholder="e.g. VoIP" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})}/></TableCell>
                           <TableCell><Input placeholder="e.g. voip_issue" value={formData.code || ''} onChange={(e) => setFormData({...formData, code: e.target.value.toLowerCase().replace(/\s+/g, '_')})}/></TableCell>
                           <TableCell><Input type="number" min="1" className="text-right" value={formData.sla_hours || 24} onChange={(e) => setFormData({...formData, sla_hours: parseInt(e.target.value)})}/></TableCell>
@@ -162,11 +162,11 @@ export const CategorySettings: React.FC = () => {
                   )}
                   
                   {categories.map((cat) => (
-                      <TableRow key={cat.id} className={`${editingId === cat.id ? 'bg-blue-50' : ''}`}>
-                          <TableCell>{editingId === cat.id && canManage ? <Input value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} /> : <div className="text-sm font-bold text-gray-900">{cat.name}</div>}</TableCell>
-                          <TableCell>{editingId === cat.id && canManage ? <Input disabled value={formData.code || ''} /> : <div className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded w-fit">{cat.code}</div>}</TableCell>
-                          <TableCell>{editingId === cat.id && canManage ? <Input type="number" min="1" className="text-right" value={formData.sla_hours || 0} onChange={(e) => setFormData({...formData, sla_hours: parseInt(e.target.value) || 0})} /> : <div className={`text-sm font-bold text-right ${cat.sla_hours <= 4 ? 'text-red-600' : 'text-gray-700'}`}>{cat.sla_hours} hrs</div>}</TableCell>
-                          <TableCell>{editingId === cat.id && canManage ? <Input value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})} /> : <div className="text-sm text-gray-500 truncate max-w-xs">{cat.description}</div>}</TableCell>
+                      <TableRow key={cat.id} className={`${editingId === cat.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                          <TableCell>{editingId === cat.id && canManage ? <Input value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} /> : <div className="text-sm font-bold text-gray-900 dark:text-gray-100">{cat.name}</div>}</TableCell>
+                          <TableCell>{editingId === cat.id && canManage ? <Input disabled value={formData.code || ''} /> : <div className="text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded w-fit">{cat.code}</div>}</TableCell>
+                          <TableCell>{editingId === cat.id && canManage ? <Input type="number" min="1" className="text-right" value={formData.sla_hours || 0} onChange={(e) => setFormData({...formData, sla_hours: parseInt(e.target.value) || 0})} /> : <div className={`text-sm font-bold text-right ${cat.sla_hours <= 4 ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>{cat.sla_hours} hrs</div>}</TableCell>
+                          <TableCell>{editingId === cat.id && canManage ? <Input value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})} /> : <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">{cat.description}</div>}</TableCell>
                           {canManage && (
                             <TableCell className="text-right">
                                 {editingId === cat.id ? (

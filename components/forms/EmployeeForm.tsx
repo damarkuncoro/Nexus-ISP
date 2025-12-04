@@ -87,14 +87,14 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-8 border-b border-gray-200 pb-6">
+      <div className="mb-8 border-b border-gray-200 dark:border-slate-700 pb-6">
          <Flex align="center" gap={4}>
-           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
-             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300">
+             <ArrowLeft className="w-5 h-5" />
            </Button>
            <div>
-             <h1 className="text-2xl font-bold text-gray-900">{initialData ? 'Edit Member' : 'New Member'}</h1>
-             <p className="text-sm text-gray-500 mt-1">Manage staff profiles, roles, and administrative data</p>
+             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{initialData ? 'Edit Member' : 'New Member'}</h1>
+             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage staff profiles, roles, and administrative data</p>
            </div>
          </Flex>
       </div>
@@ -142,13 +142,13 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({ onClose, onSubmit, i
                 <TabsContent value="admin" className="space-y-6">
                     <Grid cols={1} className="sm:grid-cols-2" gap={6}>
                         <div><Label htmlFor="identityNumber">Identity Number (KTP/ID)</Label><Input id="identityNumber" value={identityNumber} onChange={e => setIdentityNumber(e.target.value)} /></div>
-                        <div className="sm:col-span-2"><Label htmlFor="certifications">Certifications</Label><Input id="certifications" value={certifications} onChange={e => setCertifications(e.target.value)} placeholder="e.g. MTCNA, CCNA, FO Certified" /><p className="text-xs text-gray-500 mt-1">Separate with commas.</p></div>
+                        <div className="sm:col-span-2"><Label htmlFor="certifications">Certifications</Label><Input id="certifications" value={certifications} onChange={e => setCertifications(e.target.value)} placeholder="e.g. MTCNA, CCNA, FO Certified" /><p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Separate with commas.</p></div>
                     </Grid>
                 </TabsContent>
               </Tabs>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 bg-gray-50/50 p-6 mt-4">
+            <CardFooter className="flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 p-6 mt-4 border-t border-gray-100 dark:border-slate-700">
                 <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}><Save className="w-4 h-4 mr-2" /> Save Member</Button>
             </CardFooter>

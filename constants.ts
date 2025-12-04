@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS public.audit_logs CASCADE;
 DROP TABLE IF EXISTS public.ticket_comments CASCADE;
 DROP TABLE IF EXISTS public.payment_methods CASCADE;
 DROP TABLE IF EXISTS public.invoices CASCADE;
+DROP TABLE IF EXISTS public.network_interfaces CASCADE;
 DROP TABLE IF EXISTS public.network_devices CASCADE;
 DROP TABLE IF EXISTS public.tickets CASCADE;
 DROP TABLE IF EXISTS public.customers CASCADE;
@@ -24,6 +25,7 @@ DROP TABLE IF EXISTS public.system_settings CASCADE;
 DROP TABLE IF EXISTS public.departments CASCADE;
 DROP TABLE IF EXISTS public.inventory_items CASCADE;
 DROP TABLE IF EXISTS public.network_alerts CASCADE;
+DROP TABLE IF EXISTS public.knowledge_articles CASCADE;
 
 -- 1. Create Plans Table
 create table public.plans (
@@ -156,6 +158,18 @@ create table public.network_devices (
   pppoe_username text
 );
 
+-- 9b. Create Network Interfaces Table
+create table public.network_interfaces (
+  id uuid default gen_random_uuid() primary key,
+  device_id uuid references public.network_devices(id) on delete cascade not null,
+  name text not null,
+  ip_address text,
+  mac_address text,
+  status text default 'up' check (status in ('up', 'down')),
+  type text default 'ethernet',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- 10. Create Employees Table (ISP Enhanced)
 create table public.employees (
   id uuid default gen_random_uuid() primary key,
@@ -207,7 +221,21 @@ create table public.network_alerts (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 14. Create Audit Logs Table
+-- 14. Create Knowledge Base Articles Table
+create table public.knowledge_articles (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  content text not null,
+  category text not null,
+  tags text[] default '{}',
+  author_name text not null,
+  views int default 0,
+  is_published boolean default true,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 15. Create Audit Logs Table
 create table public.audit_logs (
   id uuid default gen_random_uuid() primary key,
   action text not null,
@@ -218,18 +246,20 @@ create table public.audit_logs (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 15. Create Indexes
+-- 16. Create Indexes
 create index tickets_customer_id_idx on public.tickets(customer_id);
 create index customers_plan_id_idx on public.customers(plan_id);
 create index invoices_customer_id_idx on public.invoices(customer_id);
 create index payment_methods_customer_id_idx on public.payment_methods(customer_id);
 create index ticket_comments_ticket_id_idx on public.ticket_comments(ticket_id);
 create index network_devices_customer_id_idx on public.network_devices(customer_id);
+create index network_interfaces_device_id_idx on public.network_interfaces(device_id);
 create index audit_logs_created_at_idx on public.audit_logs(created_at);
 create index inventory_sku_idx on public.inventory_items(sku);
 create index network_alerts_timestamp_idx on public.network_alerts(timestamp);
+create index kb_category_idx on public.knowledge_articles(category);
 
--- 16. Enable RLS
+-- 17. Enable RLS
 alter table public.customers enable row level security;
 alter table public.tickets enable row level security;
 alter table public.plans enable row level security;
@@ -237,15 +267,17 @@ alter table public.invoices enable row level security;
 alter table public.payment_methods enable row level security;
 alter table public.ticket_comments enable row level security;
 alter table public.network_devices enable row level security;
+alter table public.network_interfaces enable row level security;
 alter table public.employees enable row level security;
 alter table public.ticket_categories enable row level security;
 alter table public.system_settings enable row level security;
 alter table public.departments enable row level security;
 alter table public.inventory_items enable row level security;
 alter table public.network_alerts enable row level security;
+alter table public.knowledge_articles enable row level security;
 alter table public.audit_logs enable row level security;
 
--- 17. Create Policies
+-- 18. Create Policies
 create policy "Public Access Customers" on public.customers for all using (true);
 create policy "Public Access Tickets" on public.tickets for all using (true);
 create policy "Public Access Plans" on public.plans for all using (true);
@@ -253,15 +285,17 @@ create policy "Public Access Invoices" on public.invoices for all using (true);
 create policy "Public Access Payment Methods" on public.payment_methods for all using (true);
 create policy "Public Access Comments" on public.ticket_comments for all using (true);
 create policy "Public Access Network Devices" on public.network_devices for all using (true);
+create policy "Public Access Network Interfaces" on public.network_interfaces for all using (true);
 create policy "Public Access Employees" on public.employees for all using (true);
 create policy "Public Access Categories" on public.ticket_categories for all using (true);
 create policy "Public Access Settings" on public.system_settings for all using (true);
 create policy "Public Access Departments" on public.departments for all using (true);
 create policy "Public Access Inventory" on public.inventory_items for all using (true);
 create policy "Public Access Alerts" on public.network_alerts for all using (true);
+create policy "Public Access Articles" on public.knowledge_articles for all using (true);
 create policy "Public Access Audit" on public.audit_logs for all using (true);
 
--- 18. Seed Data
+-- 19. Seed Data
 insert into public.plans (name, price, download_speed, upload_speed) values 
 ('Home Fiber Starter', 29.99, '50 Mbps', '10 Mbps'),
 ('Home Fiber Plus', 49.99, '100 Mbps', '50 Mbps'),
@@ -299,5 +333,11 @@ insert into public.network_alerts (device_name, severity, message, source, times
 ('OLT-North-District', 'warning', 'PON Port 3 Signal Low', 'Huawei NCE', now() - interval '1 hour'),
 ('Distribution-Switch-B', 'info', 'Configuration Saved', 'Syslog', now() - interval '2 hours');
 
+insert into public.knowledge_articles (title, content, category, tags, author_name) values 
+('Troubleshooting Slow Internet Speeds', '1. Verify signal strength (>-25dBm).\n2. Check for bandwidth hogs on the local network.\n3. Restart the ONU/ONT.\n4. Verify plan provisioning in OLT.', 'Troubleshooting', '{"slow", "internet", "guide"}', 'Admin User'),
+('Configuring PPPoE on MikroTik', 'Go to PPP -> Interface. Add New PPPoE Client. Select Ether1 (WAN). Enter Username/Password from CRM.', 'Provisioning', '{"mikrotik", "pppoe", "setup"}', 'Alex Net'),
+('Fiber Cut Escalation Protocol', 'If a fiber cut is confirmed:\n1. Create a Critical Ticket.\n2. Notify Field Ops Manager.\n3. Send SMS blast to affected ODP area.', 'SOP', '{"fiber", "outage", "emergency"}', 'Mike Chief'),
+('Billing Cycle Explanation', 'Invoices are generated on the 1st of each month. Payment is due by the 15th. Suspension occurs on the 20th if unpaid.', 'Billing', '{"invoice", "policy"}', 'Sarah Support');
+
 insert into public.audit_logs (action, entity, details, performed_by) values
-('system', 'System', 'System initialized with default data', 'System')`;
+('system', 'System', 'System initialized with default data', 'System');`;

@@ -37,21 +37,21 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
       
-      <Flex direction="col" justify="between" gap={4} className="sm:flex-row sm:items-center border-b border-gray-200 pb-6">
+      <Flex direction="col" justify="between" gap={4} className="sm:flex-row sm:items-center border-b border-gray-200 dark:border-slate-700 pb-6">
         <Flex align="center" gap={4}>
           <Button 
             onClick={onBack} 
             variant="ghost"
             size="icon"
-            className="rounded-full bg-gray-100 hover:bg-white"
+            className="rounded-full bg-gray-100 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </Button>
           <div>
-             <h1 className="text-2xl font-bold text-gray-900">{plan.name}</h1>
-             <Flex as="p" align="center" gap={2} className="text-sm text-gray-500 mt-1">
-                <span className="font-medium text-primary-600">{formatCurrency(plan.price, currency)}/mo</span>
-                <span className="text-gray-300">•</span>
+             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{plan.name}</h1>
+             <Flex as="p" align="center" gap={2} className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <span className="font-medium text-primary-600 dark:text-primary-400">{formatCurrency(plan.price, currency)}/mo</span>
+                <span className="text-gray-300 dark:text-slate-600">•</span>
                 <span>{plan.download_speed} ↓ / {plan.upload_speed} ↑</span>
              </Flex>
           </div>
@@ -79,42 +79,42 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
       </Flex>
 
       <Grid cols={1} className="md:grid-cols-3" gap={6}>
-        <Flex align="center" gap={4} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+        <Flex align="center" gap={4} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
                 <Users className="w-6 h-6" />
             </div>
             <div>
-                <p className="text-sm font-medium text-gray-500">Active Subscribers</p>
-                <p className="text-2xl font-bold text-gray-900">{planCustomers.length}</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Active Subscribers</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{planCustomers.length}</p>
             </div>
         </Flex>
-        <Flex align="center" gap={4} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600">
+        <Flex align="center" gap={4} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
                 <TrendingUp className="w-6 h-6" />
             </div>
             <div>
-                <p className="text-sm font-medium text-gray-500">Monthly Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(monthlyRevenue, currency)}</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Revenue</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(monthlyRevenue, currency)}</p>
             </div>
         </Flex>
-        <Flex align="center" gap={4} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="p-3 bg-purple-50 rounded-lg text-purple-600">
+        <Flex align="center" gap={4} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+            <div className="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
                 <Wifi className="w-6 h-6" />
             </div>
             <div>
-                <p className="text-sm font-medium text-gray-500">Service Type</p>
-                <p className="text-lg font-bold text-gray-900">Fiber Optic</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Service Type</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">Fiber Optic</p>
             </div>
         </Flex>
       </Grid>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-           <h3 className="text-lg font-medium text-gray-900">Assigned Customers</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+           <h3 className="text-lg font-medium text-gray-900 dark:text-white">Assigned Customers</h3>
         </div>
         
         {planCustomers.length === 0 ? (
-           <div className="p-12 text-center text-gray-500">
+           <div className="p-12 text-center text-gray-500 dark:text-gray-400">
               No customers are currently assigned to this plan.
            </div>
         ) : (
@@ -135,20 +135,20 @@ export const PlanDetail: React.FC<PlanDetailProps> = ({
                             className="cursor-pointer"
                         >
                             <TableCell className="whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                                <div className="text-xs text-gray-500">{customer.company}</div>
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">{customer.name}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">{customer.company}</div>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
                                 <CustomerStatusBadge status={customer.account_status} />
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
-                                <Flex align="center" className="text-sm text-gray-500">
+                                <Flex align="center" className="text-sm text-gray-500 dark:text-gray-400">
                                     <Mail className="w-4 h-4 mr-2 text-gray-400" />
                                     {customer.email}
                                 </Flex>
                             </TableCell>
                             <TableCell className="whitespace-nowrap">
-                                <Flex align="center" className="text-sm text-gray-500">
+                                <Flex align="center" className="text-sm text-gray-500 dark:text-gray-400">
                                     <MapPin className="w-4 h-4 mr-2 text-gray-400" />
                                     <span className="truncate max-w-xs">{customer.address || 'N/A'}</span>
                                 </Flex>

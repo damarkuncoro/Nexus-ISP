@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -51,34 +52,34 @@ export const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({ isOpen, 
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <Label className="mb-2 block">Type</Label>
+                <Label className="mb-2 block dark:text-gray-200">Type</Label>
                 <Flex gap={4}>
                     <label className="flex items-center cursor-pointer">
-                        <input type="radio" className="h-4 w-4 text-primary-600" checked={methodType === 'credit_card'} onChange={() => setMethodType('credit_card')} />
-                        <span className="ml-2 text-sm text-gray-700">Credit Card</span>
+                        <input type="radio" className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300" checked={methodType === 'credit_card'} onChange={() => setMethodType('credit_card')} />
+                        <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Credit Card</span>
                     </label>
                     <label className="flex items-center cursor-pointer">
-                        <input type="radio" className="h-4 w-4 text-primary-600" checked={methodType === 'bank_transfer'} onChange={() => setMethodType('bank_transfer')} />
-                        <span className="ml-2 text-sm text-gray-700">Bank Transfer</span>
+                        <input type="radio" className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300" checked={methodType === 'bank_transfer'} onChange={() => setMethodType('bank_transfer')} />
+                        <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Bank Transfer</span>
                     </label>
                 </Flex>
             </div>
             
             {methodType === 'bank_transfer' && (
                 <div>
-                    <Label className="mb-1">Bank Name</Label>
+                    <Label className="mb-1 dark:text-gray-200">Bank Name</Label>
                     <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Chase" />
                 </div>
             )}
             
             <div>
-                <Label className="mb-1">Last 4 Digits</Label>
+                <Label className="mb-1 dark:text-gray-200">Last 4 Digits</Label>
                 <Input value={lastFour} onChange={(e) => setLastFour(e.target.value)} maxLength={4} placeholder="1234" />
             </div>
             
             {methodType === 'credit_card' && (
                 <div>
-                    <Label className="mb-1">Expiry Date</Label>
+                    <Label className="mb-1 dark:text-gray-200">Expiry Date</Label>
                     <Input value={expiry} onChange={(e) => setExpiry(e.target.value)} placeholder="MM/YY" />
                 </div>
             )}

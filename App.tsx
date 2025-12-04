@@ -23,6 +23,11 @@ import { SettingsView } from './components/SettingsView';
 import { AlertsView } from './components/AlertsView';
 import { AccessDenied } from './components/AccessDenied';
 import { CommandPalette } from './components/CommandPalette';
+import { CoverageMap } from './components/CoverageMap';
+import { LoginView } from './components/LoginView';
+import { KnowledgeBase } from './components/KnowledgeBase';
+import { ReportsView } from './components/ReportsView';
+import { ProfileView } from './components/ProfileView';
 import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem } from './types';
 import { Plus, Loader2 } from 'lucide-react';
 import { SETUP_SQL } from './constants';
@@ -49,13 +54,18 @@ type AppView =
   | 'employees' | 'employee-form'
   | 'alerts'
   | 'inventory' | 'inventory-form'
-  | 'finance';
+  | 'finance'
+  | 'map'
+  | 'kb'
+  | 'reports'
+  | 'profile';
 
 export const App: React.FC = () => {
+  const { currentUser, hasPermission, logout } = useAuth();
+  
   const [view, setView] = useState<AppView>('dashboard');
   const toast = useToast();
   
-  const { hasPermission, logout } = useAuth();
   const { currency, saveCurrency, loading: settingsLoading } = useSettings();
 
   const { tickets, loading: ticketsLoading, error: ticketsError, loadTickets, addTicket, editTicket, removeTicket } = useTickets();
@@ -89,6 +99,9 @@ export const App: React.FC = () => {
   const [previousView, setPreviousView] = useState<AppView | null>(null);
 
   const loadData = useCallback(async () => {
+    // Only load data if logged in
+    if (!currentUser) return;
+
     setSetupError(false);
     try {
       await Promise.all([
@@ -103,9 +116,10 @@ export const App: React.FC = () => {
     } catch (err) {
       console.error("Data load failed via hooks");
     }
-  }, [loadTickets, loadCustomers, loadPlans, loadDevices, loadEmployees, loadCategories, loadDepartments]);
+  }, [currentUser, loadTickets, loadCustomers, loadPlans, loadDevices, loadEmployees, loadCategories, loadDepartments]);
 
   useEffect(() => { loadData(); }, [loadData]);
+  
   useEffect(() => {
     if ((ticketsError && isSetupError(ticketsError)) || (customersError && isSetupError(customersError))) {
       setSetupError(true);
@@ -123,6 +137,11 @@ export const App: React.FC = () => {
     }
   };
 
+  // If not logged in, show login screen
+  if (!currentUser) {
+      return <LoginView />;
+  }
+
   const getActiveNav = (): any => {
       const formMap: Record<string, string> = { 
         'ticket-form': 'tickets', 
@@ -130,7 +149,11 @@ export const App: React.FC = () => {
         'plan-form': 'plans', 
         'device-form': 'network', 
         'employee-form': 'employees',
-        'inventory-form': 'inventory'
+        'inventory-form': 'inventory',
+        'map': 'map',
+        'kb': 'kb',
+        'reports': 'reports',
+        'profile': 'dashboard' // Profile doesn't have a sidebar item active state usually
       };
       return formMap[view] || view;
   };
@@ -198,7 +221,11 @@ export const App: React.FC = () => {
           tickets: selectedTicket ? 'Ticket Details' : 'Ticket Management', 'ticket-form': editingTicket?.id ? 'Edit Ticket' : 'New Ticket',
           employees: selectedEmployee ? 'Team Member Profile' : 'Team Management', 'employee-form': editingEmployee ? 'Edit Member' : 'New Member',
           inventory: 'Warehouse Inventory', 'inventory-form': editingInventory ? 'Edit Item' : 'New Item',
-          finance: 'Finance & Billing'
+          finance: 'Finance & Billing',
+          map: 'Service Coverage',
+          kb: 'Knowledge Base',
+          reports: 'Analytics & Reports',
+          profile: 'My Profile'
       };
       return titles[view] || 'Nexus ISP Manager';
   };
@@ -208,7 +235,7 @@ export const App: React.FC = () => {
     if (view === 'settings' && !hasPermission('manage_settings')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin" />;
     if ((view === 'employees' || view === 'employee-form') && !hasPermission('manage_team')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Admin or Manager" />;
     if ((view === 'inventory' || view === 'inventory-form') && !hasPermission('manage_network') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Tech or Admin" />;
-    if (view === 'finance' && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Finance/Admin" />;
+    if ((view === 'finance' || view === 'reports') && !hasPermission('view_billing')) return <AccessDenied onBack={() => setView('dashboard')} requiredRole="Finance/Admin" />;
 
     // Forms
     if (view === 'ticket-form') return <TicketForm onClose={() => setView('tickets')} onSubmit={editingTicket && editingTicket.id ? (d) => handleUpdateTicket(editingTicket.id!, d) : handleCreateTicket} initialData={editingTicket || undefined} isLoading={false} customers={customers} employees={employees} categories={categories} />;
@@ -252,6 +279,10 @@ export const App: React.FC = () => {
         case 'dashboard': return <DashboardView tickets={tickets} customers={customers} onTicketClick={handleTicketClick} onViewChange={(v) => handleViewChange(v)} />;
         case 'alerts': return <AlertsView onCreateTicket={openCreateTicketFromAlert} />;
         case 'finance': return <FinanceView customers={customers} plans={plans} currency={currency} />;
+        case 'reports': return <ReportsView customers={customers} tickets={tickets} currency={currency} />;
+        case 'map': return <CoverageMap customers={customers} onCustomerSelect={handleCustomerClick} />;
+        case 'kb': return <KnowledgeBase />;
+        case 'profile': return <ProfileView />;
         case 'tickets': 
           return selectedTicket 
             ? <TicketDetail 
@@ -344,11 +375,11 @@ export const App: React.FC = () => {
   };
 
   const shouldShowAddButton = () => {
-      const formViews = ['ticket-form', 'customer-form', 'plan-form', 'device-form', 'employee-form', 'inventory-form'];
+      const formViews = ['ticket-form', 'customer-form', 'plan-form', 'device-form', 'employee-form', 'inventory-form', 'map', 'kb', 'reports', 'profile'];
       if (formViews.includes(view) || globalError || selectedCustomer || selectedPlan || selectedTicket || selectedEmployee) return false;
       
       const permissionMap: Record<string, boolean> = {
-          dashboard: false, settings: false, alerts: false, finance: false,
+          dashboard: false, settings: false, alerts: false, finance: false, map: false, kb: false, reports: false, profile: false,
           employees: hasPermission('manage_team'),
           plans: hasPermission('manage_settings'),
           network: hasPermission('manage_network'),
@@ -377,11 +408,11 @@ export const App: React.FC = () => {
       />
       <Layout currentView={getActiveNav()} onViewChange={(v) => handleViewChange(v as AppView)}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {!view.includes('form') && (
+          {!view.includes('form') && view !== 'profile' && (
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{getPageTitle()}</h1>
-                <p className="mt-1 text-sm text-gray-500">Manage your ISP operations</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{getPageTitle()}</h1>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your ISP operations</p>
               </div>
               {shouldShowAddButton() && (
                 <button 

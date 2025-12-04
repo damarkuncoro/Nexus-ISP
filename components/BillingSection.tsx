@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Customer, Invoice, InvoiceStatus, SubscriptionPlan } from '../types';
 import { useBilling } from '../hooks/useBilling';
@@ -90,11 +91,11 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
   return (
     <Grid cols={1} className="lg:grid-cols-3" gap={6}>
       <GridItem className="lg:col-span-2">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <Flex justify="between" align="center" className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+            <Flex justify="between" align="center" className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
                 <Flex align="center" gap={3}>
-                    <FileText className="w-5 h-5 text-gray-500" />
-                    <h3 className="text-lg font-medium text-gray-900">Billing History & Invoices</h3>
+                    <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Billing History & Invoices</h3>
                 </Flex>
                 <Button size="sm" onClick={handleGenerateInvoice} isLoading={isGenerating}>
                     <Plus className="w-3 h-3 mr-1" />
@@ -125,7 +126,7 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
                     <TableBody>
                         {invoices.map((invoice) => (
                             <TableRow key={invoice.id} onClick={() => setSelectedInvoice(invoice)} className="cursor-pointer">
-                                <TableCell className="font-medium text-primary-600">{invoice.invoice_number}</TableCell>
+                                <TableCell className="font-medium text-primary-600 dark:text-primary-400">{invoice.invoice_number}</TableCell>
                                 <TableCell><InvoiceStatusBadge status={invoice.status} /></TableCell>
                                 <TableCell>{formatDate(invoice.issued_date)}</TableCell>
                                 <TableCell>{formatDate(invoice.due_date)}</TableCell>
@@ -143,11 +144,11 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
         </div>
       </GridItem>
       <GridItem>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <Flex justify="between" align="center" className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
+            <Flex justify="between" align="center" className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
                 <Flex align="center" gap={3}>
-                    <CreditCard className="w-5 h-5 text-gray-500" />
-                    <h3 className="text-lg font-medium text-gray-900">Payment Methods</h3>
+                    <CreditCard className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Payment Methods</h3>
                 </Flex>
                 <Button variant="outline" size="sm" onClick={() => setShowAddModal(true)}>
                     <Plus className="w-3 h-3 mr-1" />
@@ -156,12 +157,12 @@ export const BillingSection: React.FC<BillingSectionProps> = ({ customer, curren
             </Flex>
             <div className="p-6 space-y-4">
                 {paymentMethods.length > 0 ? paymentMethods.map(pm => (
-                    <Flex key={pm.id} justify="between" align="center" className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <Flex key={pm.id} justify="between" align="center" className="p-3 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600">
                         <Flex align="center" gap={3}>
                             <Landmark className="w-5 h-5 text-gray-400" />
                             <div>
-                                <p className="text-sm font-medium text-gray-900">{pm.type === 'bank_transfer' ? pm.bank_name : 'Credit Card'}</p>
-                                <p className="text-xs text-gray-500">**** **** **** {pm.last_four}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{pm.type === 'bank_transfer' ? pm.bank_name : 'Credit Card'}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">**** **** **** {pm.last_four}</p>
                             </div>
                         </Flex>
                         {pm.is_default && <Badge variant="success">Default</Badge>}

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 
@@ -30,7 +31,7 @@ const Tabs = ({ defaultValue, value, onValueChange, children, className }: TabsP
 };
 
 const TabsList = ({ className, children }: { className?: string; children?: ReactNode }) => (
-  <div className={cn("inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-500", className)}>
+  <div className={cn("inline-flex h-10 items-center justify-center rounded-lg bg-gray-100 p-1 text-gray-500 dark:bg-slate-800 dark:text-gray-400", className)}>
     {children}
   </div>
 );
@@ -57,7 +58,7 @@ const TabsTrigger = ({ value, children, className, disabled }: TabsTriggerProps)
       onClick={() => !disabled && context.onValueChange(value)}
       className={cn(
         "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        isActive ? "bg-white text-gray-900 shadow-sm" : "hover:bg-gray-200/50 hover:text-gray-900",
+        isActive ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "hover:bg-gray-200/50 hover:text-gray-900 dark:hover:bg-slate-700/50 dark:hover:text-gray-200",
         className
       )}
     >

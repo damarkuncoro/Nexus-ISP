@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Search, Ticket as TicketIcon, LayoutDashboard, Server, Users, Wifi, Settings, 
-  CreditCard, Package, LogOut, Bell, UserPlus, FileText, User
+  CreditCard, Package, LogOut, Bell, UserPlus, FileText, User, BookOpen, Map, BarChart3
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
@@ -53,10 +53,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     // Navigation
     { id: 'nav-dash', label: 'Go to Dashboard', icon: LayoutDashboard, group: 'Navigation', action: () => onNavigate('dashboard') },
     { id: 'nav-alerts', label: 'Go to NOC Alerts', icon: Bell, group: 'Navigation', action: () => onNavigate('alerts') },
+    { id: 'nav-reports', label: 'Go to Analytics & Reports', icon: BarChart3, group: 'Navigation', action: () => onNavigate('reports'), role: 'view_billing' },
+    { id: 'nav-map', label: 'Go to Coverage Map', icon: Map, group: 'Navigation', action: () => onNavigate('map') },
     { id: 'nav-tickets', label: 'Go to Tickets', icon: TicketIcon, group: 'Navigation', action: () => onNavigate('tickets') },
     { id: 'nav-cust', label: 'Go to Subscribers', icon: Users, group: 'Navigation', action: () => onNavigate('customers') },
     { id: 'nav-net', label: 'Go to Network Devices', icon: Server, group: 'Navigation', action: () => onNavigate('network'), role: 'manage_network' },
     { id: 'nav-inv', label: 'Go to Inventory', icon: Package, group: 'Navigation', action: () => onNavigate('inventory'), role: 'manage_network' },
+    { id: 'nav-kb', label: 'Go to Knowledge Base', icon: BookOpen, group: 'Navigation', action: () => onNavigate('kb') },
     { id: 'nav-plans', label: 'Go to Service Plans', icon: Wifi, group: 'Navigation', action: () => onNavigate('plans'), role: 'manage_settings' },
     { id: 'nav-fin', label: 'Go to Finance & Billing', icon: CreditCard, group: 'Navigation', action: () => onNavigate('finance'), role: 'view_billing' },
     { id: 'nav-set', label: 'Go to Settings', icon: Settings, group: 'Navigation', action: () => onNavigate('settings'), role: 'manage_settings' },
@@ -163,7 +166,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   };
 
   // Group commands for rendering
-  const groupedCommands = useMemo(() => {
+  const groupedCommands = useMemo<Record<string, CommandItem[]>>(() => {
       const groups: Record<string, CommandItem[]> = {};
       filteredCommands.forEach(cmd => {
           if (!groups[cmd.group]) groups[cmd.group] = [];
@@ -182,31 +185,31 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         onClick={() => setIsOpen(false)}
       />
       
-      <div className="relative w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-200">
-        <div className="flex items-center px-4 border-b border-gray-100">
+      <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-200 dark:border-slate-800">
+        <div className="flex items-center px-4 border-b border-gray-100 dark:border-slate-800">
           <Search className="w-5 h-5 text-gray-400 mr-3" />
           <input
             ref={inputRef}
             autoFocus
             type="text"
-            className="w-full py-4 text-base bg-transparent border-none outline-none placeholder:text-gray-400 text-gray-900"
+            className="w-full py-4 text-base bg-transparent border-none outline-none placeholder:text-gray-400 text-gray-900 dark:text-white"
             placeholder="Type a command, customer name, or ticket ID..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div className="text-xs text-gray-400 border border-gray-200 rounded px-1.5 py-0.5 font-mono">Esc</div>
+          <div className="text-xs text-gray-400 border border-gray-200 dark:border-slate-700 rounded px-1.5 py-0.5 font-mono">Esc</div>
         </div>
 
-        <div className="max-h-[300px] overflow-y-auto py-2">
+        <div className="max-h-[300px] overflow-y-auto py-2 custom-scrollbar">
           {filteredCommands.length === 0 ? (
             <div className="py-8 text-center text-sm text-gray-500">
               No results found.
             </div>
           ) : (
             <div className="space-y-1">
-              {Object.entries(groupedCommands).map(([group, items]) => (
+              {Object.entries(groupedCommands).map(([group, items]: [string, CommandItem[]]) => (
                   <div key={group}>
-                    <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider bg-gray-50/50 dark:bg-slate-800/50">
                       {group}
                     </div>
                     {items.map((item) => {
@@ -220,14 +223,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                           onMouseEnter={() => setSelectedIndex(filteredCommands.indexOf(item))}
                           className={cn(
                             "w-full flex items-center justify-between px-4 py-3 text-left transition-colors",
-                            isActive ? "bg-primary-50 text-primary-900" : "text-gray-700 hover:bg-gray-50"
+                            isActive ? "bg-primary-50 text-primary-900 dark:bg-slate-800 dark:text-primary-400" : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
                           )}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <Icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-primary-600" : "text-gray-400")} />
+                            <Icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-primary-600 dark:text-primary-400" : "text-gray-400")} />
                             <div className="flex flex-col min-w-0">
                                 <span className={cn("text-sm truncate", isActive && "font-medium")}>{item.label}</span>
-                                {item.description && <span className={cn("text-xs truncate", isActive ? "text-primary-600/70" : "text-gray-400")}>{item.description}</span>}
+                                {item.description && <span className={cn("text-xs truncate", isActive ? "text-primary-600/70 dark:text-primary-400/70" : "text-gray-400")}>{item.description}</span>}
                             </div>
                           </div>
                           {item.shortcut && (
@@ -242,7 +245,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           )}
         </div>
         
-        <div className="bg-gray-50 px-4 py-2 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+        <div className="bg-gray-50 dark:bg-slate-800 px-4 py-2 border-t border-gray-100 dark:border-slate-700 flex justify-between items-center text-xs text-gray-400">
             <div className="flex gap-2">
                 <span>↑↓ navigate</span>
                 <span>↵ select</span>

@@ -16,6 +16,21 @@ export const fetchAuditLogs = async (): Promise<AuditLog[]> => {
   return data as AuditLog[];
 };
 
+export const fetchAuditLogsByEntity = async (entity: string, entityId: string): Promise<AuditLog[]> => {
+  const { data, error } = await supabase
+    .from('audit_logs')
+    .select('*')
+    .eq('entity', entity)
+    .eq('entity_id', entityId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    if (error.code === 'PGRST205' || error.code === '42P01') return [];
+    return []; // Return empty on error to avoid breaking UI
+  }
+  return data as AuditLog[];
+};
+
 export const logAction = async (
   action: AuditAction,
   entity: string,

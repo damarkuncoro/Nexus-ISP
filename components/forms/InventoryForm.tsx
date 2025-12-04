@@ -66,14 +66,14 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({ onClose, onSubmit,
 
   return (
     <div className="max-w-3xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-8 border-b border-gray-200 pb-6">
+      <div className="mb-8 border-b border-gray-200 dark:border-slate-700 pb-6">
          <Flex align="center" gap={4}>
-           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
-             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300">
+             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
            </Button>
            <div>
-             <h1 className="text-2xl font-bold text-gray-900">{initialData ? 'Edit Inventory' : 'Add Item'}</h1>
-             <p className="text-sm text-gray-500 mt-1">Manage warehouse stock and equipment details</p>
+             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{initialData ? 'Edit Inventory' : 'Add Item'}</h1>
+             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage warehouse stock and equipment details</p>
            </div>
          </Flex>
       </div>
@@ -105,8 +105,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({ onClose, onSubmit,
                     </div>
                 </Grid>
 
-                <div className="border-t border-gray-100 pt-6">
-                    <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2"><Package className="w-4 h-4 text-gray-500" /> Stock & Valuation</h4>
+                <div className="border-t border-gray-100 dark:border-slate-700 pt-6">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Package className="w-4 h-4 text-gray-500" /> Stock & Valuation</h4>
                     <Grid cols={3} gap={6}>
                         <div>
                             <Label htmlFor="quantity">Current Stock</Label>
@@ -140,8 +140,8 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({ onClose, onSubmit,
                     </Grid>
                 </div>
 
-                <div className="border-t border-gray-100 pt-6">
-                    <h4 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2"><FileText className="w-4 h-4 text-gray-500" /> Additional Details</h4>
+                <div className="border-t border-gray-100 dark:border-slate-700 pt-6">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2"><FileText className="w-4 h-4 text-gray-500" /> Additional Details</h4>
                     <Label htmlFor="description" className="mb-2 block">Description / Notes</Label>
                     <Textarea 
                         id="description" 
@@ -153,7 +153,7 @@ export const InventoryForm: React.FC<InventoryFormProps> = ({ onClose, onSubmit,
                 </div>
             </CardContent>
 
-            <CardFooter className="flex justify-end gap-3 bg-gray-50/50 p-6">
+            <CardFooter className="flex justify-end gap-3 bg-gray-50 dark:bg-slate-800/50 p-6 border-t border-gray-100 dark:border-slate-700">
                 <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}><Save className="w-4 h-4 mr-2" /> Save Item</Button>
             </CardFooter>

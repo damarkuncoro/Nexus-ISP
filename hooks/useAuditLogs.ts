@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { AuditLog } from '../types';
-import { fetchAuditLogs } from '../services/auditService';
+import { fetchAuditLogs, fetchAuditLogsByEntity } from '../services/auditService';
 
 export const useAuditLogs = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -22,10 +22,25 @@ export const useAuditLogs = () => {
     }
   }, []);
 
+  const loadLogsByEntity = useCallback(async (entity: string, entityId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchAuditLogsByEntity(entity, entityId);
+      setLogs(data);
+    } catch (err) {
+      setError(err);
+      console.warn(`Failed to load audit logs for ${entity}`, err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     logs,
     loading,
     error,
-    loadLogs
+    loadLogs,
+    loadLogsByEntity
   };
 };

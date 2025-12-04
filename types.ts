@@ -199,6 +199,16 @@ export interface PaymentMethod {
   created_at: string;
 }
 
+export interface NetworkInterface {
+  id: string;
+  device_id: string;
+  name: string; // e.g. ether1, wlan0
+  ip_address?: string;
+  mac_address?: string;
+  status: 'up' | 'down';
+  type?: string; // e.g. ethernet, vlan, wifi
+}
+
 export interface NetworkDevice {
   id: string;
   customer_id?: string; 
@@ -216,6 +226,8 @@ export interface NetworkDevice {
   mac_address?: string;
   vlan_id?: string;
   pppoe_username?: string;
+  // Relationship
+  interfaces?: NetworkInterface[];
 }
 
 export interface InventoryItem {
@@ -239,6 +251,19 @@ export interface Alert {
   message: string;
   timestamp: string;
   source: string;
+}
+
+export interface KnowledgeArticle {
+  id: string;
+  title: string;
+  content: string;
+  category: string; // e.g., Troubleshooting, Billing
+  tags: string[]; // e.g., ["fiber", "slow-speed"]
+  author_name: string;
+  views: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export type TicketStats = {

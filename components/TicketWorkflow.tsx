@@ -72,29 +72,29 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
   };
 
   return (
-    <Card className="border-t-4 border-t-primary-500">
+    <Card className="border-t-4 border-t-primary-500 dark:border-t-primary-500">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg">Incident Lifecycle Workflow</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Visual Stepper */}
         <Flex align="center" justify="between" className="mb-8 overflow-x-auto relative">
-           <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -z-10" />
+           <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 dark:bg-slate-700 -z-10" />
            {steps.map((step, idx) => {
               const isActive = idx === currentStepIndex;
               const isCompleted = idx < currentStepIndex;
               const Icon = step.icon;
               
               return (
-                <Flex direction="col" align="center" key={step.status} className="bg-white px-2">
+                <Flex direction="col" align="center" key={step.status} className="bg-white dark:bg-slate-800 px-2 transition-colors duration-200">
                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
-                       isActive ? 'border-primary-600 bg-primary-50 text-primary-600' :
-                       isCompleted ? 'border-green-500 bg-green-50 text-green-600' :
-                       'border-gray-200 text-gray-300'
+                       isActive ? 'border-primary-600 bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:border-primary-500 dark:text-primary-400' :
+                       isCompleted ? 'border-green-500 bg-green-50 text-green-600 dark:bg-green-900/30 dark:border-green-500 dark:text-green-400' :
+                       'border-gray-200 text-gray-300 dark:border-slate-600 dark:text-slate-600'
                    }`}>
                       <Icon className="w-4 h-4" />
                    </div>
-                   <span className={`text-xs mt-1 font-medium ${isActive ? 'text-primary-700' : 'text-gray-500'}`}>
+                   <span className={`text-xs mt-1 font-medium ${isActive ? 'text-primary-700 dark:text-primary-400' : 'text-gray-500 dark:text-gray-500'}`}>
                        {step.label}
                    </span>
                 </Flex>
@@ -103,12 +103,12 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
         </Flex>
 
         {/* Action Area based on current status */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 border border-gray-200 dark:border-slate-700">
             {ticket.status === TicketStatus.OPEN && (
                 <div className="space-y-4">
                     <div>
-                        <h4 className="font-medium text-gray-900">Step 1: Assign to Technical Team</h4>
-                        <p className="text-sm text-gray-500">Allocate a Field Engineer or Support Agent to handle this issue.</p>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Step 1: Assign to Technical Team</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Allocate a Field Engineer or Support Agent to handle this issue.</p>
                     </div>
                     
                     <Grid cols={1} className="sm:grid-cols-[1fr_auto]" gap={4} alignItems="end">
@@ -137,8 +137,8 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
             {ticket.status === TicketStatus.ASSIGNED && (
                 <Flex justify="between" align="center">
                     <div>
-                        <h4 className="font-medium text-gray-900">Step 2: Acknowledge & Start</h4>
-                        <p className="text-sm text-gray-500">Technician has received the ticket. Start troubleshooting.</p>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Step 2: Acknowledge & Start</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Technician has received the ticket. Start troubleshooting.</p>
                     </div>
                     <Button onClick={handleStartWork} isLoading={isSubmitting}>
                         <Play className="w-4 h-4 mr-2" /> Start Troubleshooting
@@ -148,8 +148,8 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
 
             {ticket.status === TicketStatus.IN_PROGRESS && (
                 <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900">Step 3: Resolve & Report</h4>
-                    <p className="text-sm text-gray-500 mb-2">Issue fixed? Document the solution details below.</p>
+                    <h4 className="font-medium text-gray-900 dark:text-white">Step 3: Resolve & Report</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Issue fixed? Document the solution details below.</p>
                     
                     <Tabs defaultValue="resolution" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -169,7 +169,7 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                                 placeholder="Describe the specific actions taken to fix the issue (e.g., replaced router, spliced fiber, reset port configuration)..."
                                 className="min-h-[150px]"
                             />
-                            <p className="text-xs text-gray-500">Required for closure.</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Required for closure.</p>
                         </TabsContent>
 
                         <TabsContent value="rca" className="space-y-3">
@@ -180,12 +180,12 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
                                 placeholder="Identify the underlying cause (e.g., cable cut by third party, power surge, configuration error)..."
                                 className="min-h-[150px]"
                             />
-                            <p className="text-xs text-gray-500">Optional but recommended for recurring issues.</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Optional but recommended for recurring issues.</p>
                         </TabsContent>
                     </Tabs>
 
-                    <Flex justify="end" className="mt-4 pt-2 border-t border-gray-200">
-                         <Button onClick={handleResolve} isLoading={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
+                    <Flex justify="end" className="mt-4 pt-2 border-t border-gray-200 dark:border-slate-700">
+                         <Button onClick={handleResolve} isLoading={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                              <Check className="w-4 h-4 mr-2" /> Mark Resolved
                          </Button>
                     </Flex>
@@ -195,14 +195,14 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
             {ticket.status === TicketStatus.RESOLVED && (
                 <Flex justify="between" align="center">
                      <div>
-                        <h4 className="font-medium text-gray-900">Step 4: Verify Fix</h4>
-                        <p className="text-sm text-gray-500">Confirm with the customer that services are restored.</p>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Step 4: Verify Fix</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Confirm with the customer that services are restored.</p>
                     </div>
                     <Flex gap={2}>
                         <Button variant="outline" onClick={handleStartWork} isLoading={isSubmitting}>
                              Not Fixed (Reopen)
                         </Button>
-                        <Button onClick={handleVerify} isLoading={isSubmitting} className="bg-teal-600 hover:bg-teal-700">
+                        <Button onClick={handleVerify} isLoading={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white">
                              <Search className="w-4 h-4 mr-2" /> Verify Success
                         </Button>
                     </Flex>
@@ -212,8 +212,8 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
             {ticket.status === TicketStatus.VERIFIED && (
                 <Flex justify="between" align="center">
                     <div>
-                        <h4 className="font-medium text-gray-900">Step 5: Final Closure</h4>
-                        <p className="text-sm text-gray-500">Review ticket data and close the incident.</p>
+                        <h4 className="font-medium text-gray-900 dark:text-white">Step 5: Final Closure</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Review ticket data and close the incident.</p>
                     </div>
                     <Button onClick={handleClose} isLoading={isSubmitting} variant="secondary">
                          <CheckCircle2 className="w-4 h-4 mr-2" /> Close Ticket
@@ -223,11 +223,11 @@ export const TicketWorkflow: React.FC<TicketWorkflowProps> = ({ ticket, employee
 
             {ticket.status === TicketStatus.CLOSED && (
                 <div className="text-center py-2">
-                    <p className="text-sm font-medium text-green-700 flex items-center justify-center gap-2">
+                    <p className="text-sm font-medium text-green-700 dark:text-green-400 flex items-center justify-center gap-2">
                         <CheckCircle2 className="w-5 h-5" />
                         This ticket is closed.
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Post-mortem data available in details.</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Post-mortem data available in details.</p>
                 </div>
             )}
         </div>

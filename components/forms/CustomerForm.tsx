@@ -74,14 +74,14 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-8 border-b border-gray-200 pb-6">
+      <div className="mb-8 border-b border-gray-200 dark:border-slate-700 pb-6">
          <Flex align="center" gap={4}>
-           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
-             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300">
+             <ArrowLeft className="w-5 h-5" />
            </Button>
            <div>
-             <h1 className="text-2xl font-bold text-gray-900">New Registration</h1>
-             <p className="text-sm text-gray-500 mt-1">Input prospective customer details for survey and installation</p>
+             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">New Registration</h1>
+             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Input prospective customer details for survey and installation</p>
            </div>
          </Flex>
       </div>
@@ -128,7 +128,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSubmit, p
 
                     <TabsContent value="location" className="space-y-6">
                         <div><Label htmlFor="address" className="mb-1 block">Full Installation Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, Number, RT/RW, District" /></div>
-                        <div><Label htmlFor="coords" className="mb-1 block">Coordinates (Lat, Long)</Label><Input value={coordinates} onChange={(e) => setCoordinates(e.target.value)} placeholder="-6.200000, 106.816666" /><p className="text-xs text-gray-500 mt-1">Required for Fiber Feasibility Survey.</p></div>
+                        <div><Label htmlFor="coords" className="mb-1 block">Coordinates (Lat, Long)</Label><Input value={coordinates} onChange={(e) => setCoordinates(e.target.value)} placeholder="-6.200000, 106.816666" /><p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Required for Fiber Feasibility Survey.</p></div>
                         <Flex justify="end"><Button type="button" onClick={handleNextTab}>Next Step</Button></Flex>
                     </TabsContent>
 

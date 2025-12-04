@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Employee, Department } from '../types';
 import { Search, Mail, Phone, Briefcase, Trash2, Edit2, ChevronRight, Filter, LayoutGrid, List, MoreHorizontal } from 'lucide-react';
@@ -76,7 +77,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
   return (
     <div className="space-y-6">
       {/* Controls Header */}
-      <Flex justify="between" align="center" gap={4} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-col sm:flex-row">
+      <Flex justify="between" align="center" gap={4} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm flex-col sm:flex-row">
         <Flex gap={3} className="w-full sm:w-auto flex-1">
             <div className="relative w-full sm:max-w-md">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,17 +107,17 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
             )}
         </Flex>
 
-        <div className="bg-gray-100 p-1 rounded-lg flex items-center shrink-0">
+        <div className="bg-gray-100 dark:bg-slate-700 p-1 rounded-lg flex items-center shrink-0">
             <button 
                 onClick={() => setViewMode('table')} 
-                className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                className={`p-2 rounded-md transition-all ${viewMode === 'table' ? 'bg-white shadow text-gray-900 dark:bg-slate-600 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'}`}
                 title="List View"
             >
                 <List className="w-4 h-4" />
             </button>
             <button 
                 onClick={() => setViewMode('grid')} 
-                className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+                className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-gray-900 dark:bg-slate-600 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'}`}
                 title="Grid View"
             >
                 <LayoutGrid className="w-4 h-4" />
@@ -128,7 +129,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
       {filteredEmployees.length > 0 ? (
         <>
             {viewMode === 'table' ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -151,21 +152,21 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
                                         <Flex align="center" gap={3}>
                                             <Avatar className="h-9 w-9">
                                                 <AvatarImage src={employee.avatar_url} />
-                                                <AvatarFallback className="bg-primary-100 text-primary-700">{employee.name.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback className="bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">{employee.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="font-medium text-gray-900">{employee.name}</p>
-                                                {employee.identity_number && <p className="text-xs text-gray-500">ID: {employee.identity_number}</p>}
+                                                <p className="font-medium text-gray-900 dark:text-white">{employee.name}</p>
+                                                {employee.identity_number && <p className="text-xs text-gray-500 dark:text-gray-400">ID: {employee.identity_number}</p>}
                                             </div>
                                         </Flex>
                                     </TableCell>
                                     <TableCell>
                                         <div className="space-y-1">
-                                            <Flex align="center" className="text-xs text-gray-500">
+                                            <Flex align="center" className="text-xs text-gray-500 dark:text-gray-400">
                                                 <Mail className="w-3 h-3 mr-1.5" /> {employee.email}
                                             </Flex>
                                             {employee.phone && (
-                                                <Flex align="center" className="text-xs text-gray-500">
+                                                <Flex align="center" className="text-xs text-gray-500 dark:text-gray-400">
                                                     <Phone className="w-3 h-3 mr-1.5" /> {employee.phone}
                                                 </Flex>
                                             )}
@@ -175,7 +176,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
                                     <TableCell><EmployeeStatusBadge status={employee.status} /></TableCell>
                                     <TableCell>
                                         {employee.department ? (
-                                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">
+                                            <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-slate-700 text-xs font-medium text-gray-700 dark:text-gray-300">
                                                 {employee.department}
                                             </span>
                                         ) : (
@@ -190,7 +191,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
                                                         variant="ghost"
                                                         size="icon"
                                                         onClick={(e) => { e.stopPropagation(); onEdit(employee); }}
-                                                        className="h-8 w-8 text-gray-500 hover:text-primary-600"
+                                                        className="h-8 w-8 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
                                                     >
                                                         <Edit2 className="w-4 h-4" />
                                                     </Button>
@@ -199,14 +200,14 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
                                                             variant="ghost"
                                                             size="icon"
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className="h-8 w-8 text-gray-500 hover:text-red-600"
+                                                            className="h-8 w-8 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </Button>
                                                     </DeleteDialog>
                                                 </div>
                                             )}
-                                            {onSelect && <ChevronRight className="w-4 h-4 text-gray-300" />}
+                                            {onSelect && <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />}
                                         </Flex>
                                     </TableCell>
                                 </TableRow>
@@ -227,7 +228,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
                                     {hasPermission('manage_team') && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-gray-400 hover:text-gray-600">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                                     <MoreHorizontal className="w-4 h-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
@@ -248,31 +249,31 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
                                 </Flex>
 
                                 <Flex direction="col" align="center" className="text-center mb-6">
-                                    <Avatar className="h-20 w-20 mb-4 border-4 border-white shadow-sm bg-gray-50">
+                                    <Avatar className="h-20 w-20 mb-4 border-4 border-white dark:border-slate-700 shadow-sm bg-gray-50 dark:bg-slate-700">
                                         <AvatarImage src={employee.avatar_url} />
-                                        <AvatarFallback className="text-2xl bg-gray-100 text-gray-500">{employee.name.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback className="text-2xl bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400">{employee.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{employee.name}</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-1">{employee.name}</h3>
                                     <Flex align="center" gap={2} className="mt-2">
                                         <RoleBadge role={employee.role} />
                                         <EmployeeStatusBadge status={employee.status} />
                                     </Flex>
                                 </Flex>
 
-                                <div className="space-y-3 pt-4 border-t border-gray-100">
-                                    <Flex align="center" gap={3} className="text-sm text-gray-600">
-                                        <div className="p-1.5 bg-gray-50 rounded text-gray-400"><Mail className="w-3.5 h-3.5" /></div>
+                                <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-slate-700">
+                                    <Flex align="center" gap={3} className="text-sm text-gray-600 dark:text-gray-300">
+                                        <div className="p-1.5 bg-gray-50 dark:bg-slate-700 rounded text-gray-400"><Mail className="w-3.5 h-3.5" /></div>
                                         <span className="truncate">{employee.email}</span>
                                     </Flex>
                                     {employee.department && (
-                                        <Flex align="center" gap={3} className="text-sm text-gray-600">
-                                            <div className="p-1.5 bg-gray-50 rounded text-gray-400"><Briefcase className="w-3.5 h-3.5" /></div>
+                                        <Flex align="center" gap={3} className="text-sm text-gray-600 dark:text-gray-300">
+                                            <div className="p-1.5 bg-gray-50 dark:bg-slate-700 rounded text-gray-400"><Briefcase className="w-3.5 h-3.5" /></div>
                                             <span className="truncate">{employee.department}</span>
                                         </Flex>
                                     )}
                                     {employee.phone && (
-                                        <Flex align="center" gap={3} className="text-sm text-gray-600">
-                                            <div className="p-1.5 bg-gray-50 rounded text-gray-400"><Phone className="w-3.5 h-3.5" /></div>
+                                        <Flex align="center" gap={3} className="text-sm text-gray-600 dark:text-gray-300">
+                                            <div className="p-1.5 bg-gray-50 dark:bg-slate-700 rounded text-gray-400"><Phone className="w-3.5 h-3.5" /></div>
                                             <span className="truncate">{employee.phone}</span>
                                         </Flex>
                                     )}
@@ -284,7 +285,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({ employees, departmen
             )}
         </>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 p-12">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-12">
             <EmptyState 
                 icon={Briefcase}
                 title="No team members found"

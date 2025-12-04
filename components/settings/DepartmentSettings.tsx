@@ -96,11 +96,11 @@ export const DepartmentSettings: React.FC = () => {
     <Card>
         <CardHeader className="flex-col sm:flex-row justify-between sm:items-center gap-4 py-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2 m-0">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2 m-0">
                   <Building2 className="w-5 h-5 text-gray-500" />
                   Departments
               </h3>
-              <p className="text-xs text-gray-500 mt-1">Manage organization structure and teams.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage organization structure and teams.</p>
             </div>
             {canManage && !isAdding && !editingId && (
                 <Button 
@@ -126,7 +126,7 @@ export const DepartmentSettings: React.FC = () => {
               </TableHeader>
               <TableBody>
                   {isAdding && canManage && (
-                      <TableRow className="bg-blue-50">
+                      <TableRow className="bg-blue-50 dark:bg-blue-900/20">
                           <TableCell><Input placeholder="e.g. Finance" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})}/></TableCell>
                           <TableCell><Input placeholder="Description..." value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})}/></TableCell>
                           <TableCell><Input placeholder="e.g. Floor 2" value={formData.location || ''} onChange={(e) => setFormData({...formData, location: e.target.value})}/></TableCell>
@@ -148,13 +148,13 @@ export const DepartmentSettings: React.FC = () => {
                   )}
                   
                   {departments.map((dept) => (
-                      <TableRow key={dept.id} className={`${editingId === dept.id ? 'bg-blue-50' : ''}`}>
-                          <TableCell>{editingId === dept.id && canManage ? <Input value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} /> : <div className="text-sm font-bold text-gray-900">{dept.name}</div>}</TableCell>
-                          <TableCell>{editingId === dept.id && canManage ? <Input value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})} /> : <div className="text-sm text-gray-500 truncate max-w-xs">{dept.description || '-'}</div>}</TableCell>
+                      <TableRow key={dept.id} className={`${editingId === dept.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                          <TableCell>{editingId === dept.id && canManage ? <Input value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} /> : <div className="text-sm font-bold text-gray-900 dark:text-white">{dept.name}</div>}</TableCell>
+                          <TableCell>{editingId === dept.id && canManage ? <Input value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})} /> : <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">{dept.description || '-'}</div>}</TableCell>
                           <TableCell>
                               {editingId === dept.id && canManage ? 
                                 <Input value={formData.location || ''} onChange={(e) => setFormData({...formData, location: e.target.value})} /> : 
-                                (dept.location && <Flex align="center" gap={1} className="text-xs text-gray-500"><MapPin className="w-3 h-3" />{dept.location}</Flex>)
+                                (dept.location && <Flex align="center" gap={1} className="text-xs text-gray-500 dark:text-gray-400"><MapPin className="w-3 h-3" />{dept.location}</Flex>)
                               }
                           </TableCell>
                           <TableCell>
@@ -165,7 +165,7 @@ export const DepartmentSettings: React.FC = () => {
                                         <option key={emp.id} value={emp.name}>{emp.name}</option>
                                     ))}
                                 </Select> : 
-                                (dept.manager_name && <Flex align="center" gap={1} className="text-xs text-gray-500"><User className="w-3 h-3" />{dept.manager_name}</Flex>)
+                                (dept.manager_name && <Flex align="center" gap={1} className="text-xs text-gray-500 dark:text-gray-400"><User className="w-3 h-3" />{dept.manager_name}</Flex>)
                               }
                           </TableCell>
                           {canManage && (

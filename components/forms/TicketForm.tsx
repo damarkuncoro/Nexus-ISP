@@ -155,14 +155,14 @@ export const TicketForm: React.FC<TicketFormProps> = ({
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in duration-300">
-      <div className="mb-8 border-b border-gray-200 pb-6">
+      <div className="mb-8 border-b border-gray-200 dark:border-slate-700 pb-6">
          <Flex align="center" gap={4}>
-           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200">
-             <ArrowLeft className="w-5 h-5 text-gray-600" />
+           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300">
+             <ArrowLeft className="w-5 h-5" />
            </Button>
            <div>
-             <h1 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Edit Ticket' : 'New Ticket'}</h1>
-             <p className="text-sm text-gray-500 mt-1">{isEditMode ? `Updating ticket #${initialData?.id?.substring(0, 8)}` : 'Create a new support ticket'}</p>
+             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{isEditMode ? 'Edit Ticket' : 'New Ticket'}</h1>
+             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{isEditMode ? `Updating ticket #${initialData?.id?.substring(0, 8)}` : 'Create a new support ticket'}</p>
            </div>
          </Flex>
       </div>
@@ -172,8 +172,8 @@ export const TicketForm: React.FC<TicketFormProps> = ({
             <CardContent className="p-8">
                 <Grid cols={1} className="lg:grid-cols-3" gap={10}>
                     <GridItem className="lg:col-span-2 space-y-6">
-                        <div className="border-b border-gray-100 pb-3 mb-4">
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                        <div className="border-b border-gray-100 dark:border-slate-700 pb-3 mb-4">
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                                 <FileText className="w-4 h-4 text-primary-600" /> Issue Details
                             </h4>
                         </div>
@@ -195,17 +195,17 @@ export const TicketForm: React.FC<TicketFormProps> = ({
                         </div>
                     </GridItem>
 
-                    <GridItem className="space-y-6 lg:pl-8 lg:border-l lg:border-gray-100">
-                        <div className="border-b border-gray-100 pb-3 mb-4">
-                            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                    <GridItem className="space-y-6 lg:pl-8 lg:border-l lg:border-gray-100 dark:lg:border-slate-700">
+                        <div className="border-b border-gray-100 dark:border-slate-700 pb-3 mb-4">
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                                 <Tag className="w-4 h-4 text-primary-600" /> Triage
                             </h4>
                         </div>
                         <div>
-                            <Label className="uppercase text-xs text-gray-500 mb-2 block">Priority</Label>
+                            <Label className="uppercase text-xs text-gray-500 dark:text-gray-400 mb-2 block">Priority</Label>
                             <Grid cols={3} gap={2}>
                                 {[TicketPriority.LOW, TicketPriority.MEDIUM, TicketPriority.HIGH].map((p) => (
-                                    <button key={p} type="button" onClick={() => setPriority(p)} className={`px-2 py-2 text-xs font-medium rounded-md border text-center transition-all ${ priority === p ? (p === TicketPriority.HIGH ? 'bg-red-50 border-red-200 text-red-700 ring-1 ring-red-500' : p === TicketPriority.MEDIUM ? 'bg-orange-50 border-orange-200 text-orange-700 ring-1 ring-orange-500' : 'bg-gray-100 border-gray-300 text-gray-800 ring-1 ring-gray-500') : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' }`}>
+                                    <button key={p} type="button" onClick={() => setPriority(p)} className={`px-2 py-2 text-xs font-medium rounded-md border text-center transition-all ${ priority === p ? (p === TicketPriority.HIGH ? 'bg-red-50 border-red-200 text-red-700 ring-1 ring-red-500 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400' : p === TicketPriority.MEDIUM ? 'bg-orange-50 border-orange-200 text-orange-700 ring-1 ring-orange-500 dark:bg-orange-900/30 dark:border-orange-800 dark:text-orange-400' : 'bg-gray-100 border-gray-300 text-gray-800 ring-1 ring-gray-500 dark:bg-slate-700 dark:border-slate-600 dark:text-gray-200') : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-600 dark:text-gray-400 dark:hover:bg-slate-700' }`}>
                                         {p.toUpperCase()}
                                     </button>
                                 ))}
@@ -214,13 +214,13 @@ export const TicketForm: React.FC<TicketFormProps> = ({
                         <div>
                             <div className="flex justify-between items-center mb-1">
                                 <Label htmlFor="category">Category</Label>
-                                {currentCategoryConfig && (<span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium border border-blue-100">SLA: {currentCategoryConfig.sla_hours}h</span>)}
+                                {currentCategoryConfig && (<span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium border border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">SLA: {currentCategoryConfig.sla_hours}h</span>)}
                             </div>
                             <Select id="category" value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
                                 {categories.length > 0 ? (categories.map((cat) => (<option key={cat.id} value={cat.code}>{cat.name}</option>))) : (<option value="internet_issue">Internet Issue (Default)</option>)}
                             </Select>
                         </div>
-                        <div className="pt-4 border-t border-gray-100">
+                        <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
                             <Label htmlFor="status" className="mb-1">Status</Label>
                             <Select id="status" value={status} onChange={(e) => setStatus(e.target.value as TicketStatus)}>
                                 <option value={TicketStatus.OPEN}>Open</option>
@@ -248,19 +248,19 @@ export const TicketForm: React.FC<TicketFormProps> = ({
 
                 <div className={`mt-8 transition-all duration-500 ease-in-out ${status === TicketStatus.RESOLVED || status === TicketStatus.VERIFIED || status === TicketStatus.CLOSED ? 'block' : 'hidden'}`}>
                     <Grid cols={1} className="md:grid-cols-2" gap={6}>
-                        <div className="bg-green-50 border border-green-100 rounded-lg p-6">
-                            <Label htmlFor="resolution" className="text-green-800 mb-2 flex items-center"><CheckCircle className="w-4 h-4 mr-2" /> Resolution Notes</Label>
-                            <Textarea id="resolution" rows={3} className="border-green-200 focus:ring-green-500 focus:border-green-500" value={resolutionNotes} onChange={(e) => setResolutionNotes(e.target.value)} placeholder="Describe how the issue was resolved..." />
+                        <div className="bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800 rounded-lg p-6">
+                            <Label htmlFor="resolution" className="text-green-800 dark:text-green-400 mb-2 flex items-center"><CheckCircle className="w-4 h-4 mr-2" /> Resolution Notes</Label>
+                            <Textarea id="resolution" rows={3} className="border-green-200 dark:border-green-800 focus:ring-green-500 focus:border-green-500" value={resolutionNotes} onChange={(e) => setResolutionNotes(e.target.value)} placeholder="Describe how the issue was resolved..." />
                         </div>
-                        <div className="bg-purple-50 border border-purple-100 rounded-lg p-6">
-                            <Label htmlFor="rca" className="text-purple-800 mb-2 flex items-center"><Microscope className="w-4 h-4 mr-2" /> Root Cause Analysis (RCA)</Label>
-                            <Textarea id="rca" rows={3} className="border-purple-200 focus:ring-purple-500 focus:border-purple-500" value={rootCause} onChange={(e) => setRootCause(e.target.value)} placeholder="Why did this issue occur? (e.g. Fiber cut, Power outage)" />
+                        <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800 rounded-lg p-6">
+                            <Label htmlFor="rca" className="text-purple-800 dark:text-purple-400 mb-2 flex items-center"><Microscope className="w-4 h-4 mr-2" /> Root Cause Analysis (RCA)</Label>
+                            <Textarea id="rca" rows={3} className="border-purple-200 dark:border-purple-800 focus:ring-purple-500 focus:border-purple-500" value={rootCause} onChange={(e) => setRootCause(e.target.value)} placeholder="Why did this issue occur? (e.g. Fiber cut, Power outage)" />
                         </div>
                     </Grid>
                 </div>
             </CardContent>
 
-            <div className="bg-gray-50 px-8 py-5 border-t border-gray-200 flex justify-end gap-3">
+            <div className="bg-gray-50 dark:bg-slate-800/50 px-8 py-5 border-t border-gray-200 dark:border-slate-700 flex justify-end gap-3">
                 <Button variant="secondary" type="button" onClick={onClose}>Cancel</Button>
                 <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
                     <Save className="w-4 h-4 mr-2" />

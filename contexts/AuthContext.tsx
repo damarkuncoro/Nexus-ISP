@@ -12,6 +12,7 @@ interface AuthContextType {
   loginAs: (role: EmployeeRole) => void;
   logout: () => void;
   hasPermission: (permission: Permission) => boolean;
+  updateProfile: (updates: Partial<User>) => void;
 }
 
 export type Permission = 
@@ -70,8 +71,8 @@ const MOCK_USERS: Record<EmployeeRole, User> = {
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Default to Admin for first load
-  const [currentUser, setCurrentUser] = useState<User | null>(MOCK_USERS[EmployeeRole.ADMIN]);
+  // Default to null (Logged Out) for first load
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const loginAs = (role: EmployeeRole) => {
     setCurrentUser(MOCK_USERS[role]);
@@ -81,13 +82,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setCurrentUser(null);
   };
 
+  const updateProfile = (updates: Partial<User>) => {
+    if (currentUser) {
+        setCurrentUser({ ...currentUser, ...updates });
+    }
+  };
+
   const hasPermission = (permission: Permission): boolean => {
     if (!currentUser) return false;
     return PERMISSIONS[currentUser.role].includes(permission);
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, loginAs, logout, hasPermission }}>
+    <AuthContext.Provider value={{ currentUser, loginAs, logout, hasPermission, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Ticket, Employee } from '../../types';
 import { ShieldAlert } from 'lucide-react';
@@ -49,7 +50,7 @@ export const EscalationModal: React.FC<EscalationModalProps> = ({
   return (
     <Dialog isOpen={isOpen} onClose={onClose} className="sm:max-w-[500px]">
         <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
+            <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-500">
                 <ShieldAlert className="h-5 w-5" />
                 Escalate Ticket
             </DialogTitle>
@@ -64,7 +65,7 @@ export const EscalationModal: React.FC<EscalationModalProps> = ({
             </Alert>
 
             <div className="space-y-2">
-                <Label htmlFor="reason" className="text-gray-900">
+                <Label htmlFor="reason" className="text-gray-900 dark:text-gray-200">
                     Reason for Escalation <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -83,7 +84,7 @@ export const EscalationModal: React.FC<EscalationModalProps> = ({
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="assignee" className="text-gray-900">Reassign Ownership (Optional)</Label>
+                <Label htmlFor="assignee" className="text-gray-900 dark:text-gray-200">Reassign Ownership (Optional)</Label>
                 <Select
                     id="assignee"
                     value={escalationAssignee}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useComments } from '../hooks/useComments';
 import { Activity, Send } from 'lucide-react';
@@ -33,9 +34,9 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
   return (
     <Card>
       <CardHeader className="py-4 flex flex-row items-center gap-2">
-         <Activity className="w-5 h-5 text-gray-500" />
-         <h3 className="text-lg font-medium text-gray-900 m-0">Updates & Comments</h3>
-         <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-medium ml-2">
+         <Activity className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+         <h3 className="text-lg font-medium text-gray-900 dark:text-white m-0">Updates & Comments</h3>
+         <span className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium ml-2">
             {comments.length}
          </span>
       </CardHeader>
@@ -44,23 +45,23 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
          {/* Comment List */}
          <div className="space-y-6">
             {comments.length === 0 ? (
-               <div className="text-center py-6 text-gray-500 text-sm italic border-b border-gray-100 pb-8">
+               <div className="text-center py-6 text-gray-500 dark:text-gray-400 text-sm italic border-b border-gray-100 dark:border-slate-700 pb-8">
                   No updates yet. Start the conversation below.
                </div>
             ) : (
                comments.map((comment) => (
                   <Flex key={comment.id} gap={4} align="start" className="group">
                      <div className="flex-shrink-0">
-                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
+                        <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-gray-500 dark:text-gray-400 text-xs font-bold">
                            {comment.author_name.charAt(0)}
                         </div>
                      </div>
                      <div className="flex-1 space-y-1">
                         <Flex align="center" justify="between">
-                           <h4 className="text-sm font-bold text-gray-900">{comment.author_name}</h4>
+                           <h4 className="text-sm font-bold text-gray-900 dark:text-white">{comment.author_name}</h4>
                            <span className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleString()}</span>
                         </Flex>
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg rounded-tl-none">
+                        <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg rounded-tl-none border border-transparent dark:border-slate-700">
                            {comment.content}
                         </div>
                      </div>
@@ -72,7 +73,7 @@ export const TicketComments: React.FC<TicketCommentsProps> = ({ ticketId }) => {
          {/* New Comment Form */}
          <Flex as="form" onSubmit={handleSubmit} gap={3} align="start" className="mt-6">
             <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-bold">
+                <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400 text-xs font-bold">
                    A
                 </div>
             </div>

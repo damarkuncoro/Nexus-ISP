@@ -32,12 +32,12 @@ export const AuditLogViewer: React.FC = () => {
 
   const getActionColor = (action: AuditAction) => {
       switch (action) {
-          case AuditAction.CREATE: return 'bg-green-100 text-green-800';
-          case AuditAction.UPDATE: return 'bg-blue-100 text-blue-800';
-          case AuditAction.DELETE: return 'bg-red-100 text-red-800';
-          case AuditAction.LOGIN: return 'bg-purple-100 text-purple-800';
-          case AuditAction.SYSTEM: return 'bg-gray-100 text-gray-800';
-          default: return 'bg-gray-100 text-gray-800';
+          case AuditAction.CREATE: return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+          case AuditAction.UPDATE: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+          case AuditAction.DELETE: return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+          case AuditAction.LOGIN: return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+          case AuditAction.SYSTEM: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+          default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
       }
   };
 
@@ -45,11 +45,11 @@ export const AuditLogViewer: React.FC = () => {
     <Card>
         <CardHeader className="flex-col sm:flex-row justify-between sm:items-center gap-4 py-4">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2 m-0">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2 m-0">
                   <FileText className="w-5 h-5 text-gray-500" />
                   Audit Logs
               </h3>
-              <p className="text-xs text-gray-500 mt-1">Track system changes and user activity.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Track system changes and user activity.</p>
             </div>
             <Button size="sm" variant="outline" onClick={loadLogs} isLoading={loading}>
                 <RefreshCw className="w-4 h-4 mr-2" /> Refresh
@@ -57,7 +57,7 @@ export const AuditLogViewer: React.FC = () => {
         </CardHeader>
 
         <CardContent className="p-0">
-            <Flex className="p-4 border-b border-gray-100 bg-gray-50 flex-col sm:flex-row gap-4">
+            <Flex className="p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 flex-col sm:flex-row gap-4">
                 <div className="relative w-full sm:w-64">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Filter className="h-4 w-4 text-gray-400" /></div>
                     <Input className="pl-10" placeholder="Search logs..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -88,7 +88,7 @@ export const AuditLogViewer: React.FC = () => {
                     <TableBody>
                         {filteredLogs.map((log) => (
                             <TableRow key={log.id}>
-                                <TableCell className="whitespace-nowrap text-xs text-gray-500">
+                                <TableCell className="whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
                                     <Flex align="center" gap={1}>
                                         <Clock className="w-3 h-3" />
                                         {new Date(log.created_at).toLocaleString()}
@@ -97,10 +97,10 @@ export const AuditLogViewer: React.FC = () => {
                                 <TableCell>
                                     <Badge className={`${getActionColor(log.action)} border-0`}>{log.action.toUpperCase()}</Badge>
                                 </TableCell>
-                                <TableCell className="font-medium text-gray-900">{log.entity}</TableCell>
-                                <TableCell className="max-w-xs truncate text-gray-600" title={log.details}>{log.details || '-'}</TableCell>
+                                <TableCell className="font-medium text-gray-900 dark:text-white">{log.entity}</TableCell>
+                                <TableCell className="max-w-xs truncate text-gray-600 dark:text-gray-300" title={log.details}>{log.details || '-'}</TableCell>
                                 <TableCell>
-                                    <Flex align="center" gap={1} className="text-xs text-gray-600">
+                                    <Flex align="center" gap={1} className="text-xs text-gray-600 dark:text-gray-300">
                                         <User className="w-3 h-3" />
                                         {log.performed_by}
                                     </Flex>
