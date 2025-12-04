@@ -230,17 +230,6 @@ export interface NetworkDevice {
   interfaces?: NetworkInterface[];
 }
 
-export interface Subnet {
-  id: string;
-  name: string;
-  cidr: string; // e.g. 192.168.1.0/24
-  gateway?: string;
-  vlan_id?: string;
-  location?: string;
-  description?: string;
-  created_at: string;
-}
-
 export interface InventoryItem {
   id: string;
   name: string;
@@ -275,6 +264,17 @@ export interface KnowledgeArticle {
   is_published: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface Subnet {
+  id: string;
+  name: string;
+  cidr: string; // e.g. 192.168.1.0/24
+  gateway?: string;
+  vlan_id?: string;
+  location?: string;
+  description?: string;
+  created_at: string;
 }
 
 export type TicketStats = {

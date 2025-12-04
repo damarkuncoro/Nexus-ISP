@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { NetworkDevice, DeviceStatus, DeviceType, Subnet } from '../types';
-import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle, Trash2, Edit2, Grid as GridIcon, List, Hash, Network } from 'lucide-react';
+import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle, Trash2, Edit2, Grid as GridIcon, List, Hash, Network, Share2 } from 'lucide-react';
 import { DeviceStatusBadge } from './StatusBadges';
 import { Grid, GridItem } from './ui/grid';
 import { Flex } from './ui/flex';
@@ -18,13 +17,13 @@ import { useToast } from '../contexts/ToastContext';
 
 interface NetworkViewProps {
   devices: NetworkDevice[];
-  onAddDevice: () => void;
+  onAddDevice: (defaults?: Partial<NetworkDevice>) => void;
   onEditDevice: (device: NetworkDevice) => void;
   onDeleteDevice: (id: string) => void;
   onRefresh: () => void;
 }
 
-const DeviceIcon = ({ type }: { type: DeviceType }) => {
+const DeviceIcon = ({ type, className = "w-6 h-6" }: { type: DeviceType, className?: string }) => {
   const icons = {
     [DeviceType.ROUTER]: Router,
     [DeviceType.SWITCH]: Box,
@@ -34,7 +33,7 @@ const DeviceIcon = ({ type }: { type: DeviceType }) => {
     [DeviceType.OTHER]: Activity,
   };
   const Icon = icons[type] || Activity;
-  return <Icon className="w-6 h-6 text-gray-500 dark:text-gray-400" />;
+  return <Icon className={className + " text-gray-500 dark:text-gray-400"} />;
 };
 
 export const NetworkView: React.FC<NetworkViewProps> = ({ 
@@ -48,8 +47,9 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
   const [activeTab, setActiveTab] = useState('list');
   const [showSubnetForm, setShowSubnetForm] = useState(false);
   const [selectedSubnet, setSelectedSubnet] = useState<Subnet | null>(null);
+  const [editingSubnet, setEditingSubnet] = useState<Subnet | undefined>(undefined);
   
-  const { subnets, loadSubnets, addSubnet, removeSubnet } = useSubnets();
+  const { subnets, loadSubnets, addSubnet, editSubnet, removeSubnet } = useSubnets();
   const { hasPermission } = useAuth();
   const toast = useToast();
 
@@ -115,14 +115,52 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
       return { grid, utilization, usedCount, freeCount: 254 - usedCount };
   }, [devices, selectedSubnet]);
 
-  const handleCreateSubnet = async (data: any) => {
+  // Topology Data Calculation
+  const topologyData = useMemo(() => {
+      return subnets.map(subnet => {
+          const cidrParts = subnet.cidr.split('/');
+          // Simplified matching: check if IP starts with first 3 octets
+          // In a real app, use a proper CIDR library
+          const prefix = subnet.cidr.split('.').slice(0, 3).join('.');
+          
+          const connectedDevices = devices.filter(d => {
+              const deviceIpMatch = d.ip_address.startsWith(prefix);
+              const interfaceMatch = d.interfaces?.some(intf => intf.ip_address?.startsWith(prefix));
+              return deviceIpMatch || interfaceMatch;
+          });
+
+          return {
+              subnet,
+              devices: connectedDevices,
+              gatewayDevice: connectedDevices.find(d => d.ip_address === subnet.gateway || d.interfaces?.some(i => i.ip_address === subnet.gateway))
+          };
+      });
+  }, [subnets, devices]);
+
+  const handleSaveSubnet = async (data: any) => {
       try {
-          await addSubnet(data);
-          toast.success("Subnet created successfully");
+          if (editingSubnet) {
+              await editSubnet(editingSubnet.id, data);
+              toast.success("Subnet updated successfully");
+          } else {
+              await addSubnet(data);
+              toast.success("Subnet created successfully");
+          }
           setShowSubnetForm(false);
+          setEditingSubnet(undefined);
       } catch (e: any) {
           toast.error(e.message);
       }
+  };
+
+  const handleEditSubnetClick = (subnet: Subnet) => {
+      setEditingSubnet(subnet);
+      setShowSubnetForm(true);
+  };
+
+  const handleAddSubnetClick = () => {
+      setEditingSubnet(undefined);
+      setShowSubnetForm(true);
   };
 
   const handleDeleteSubnet = async (id: string) => {
@@ -135,8 +173,23 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
       }
   };
 
+  const handleIpClick = (cell: any) => {
+      if (cell.usage) {
+          // Edit existing device
+          onEditDevice(cell.usage.device);
+      } else if (cell.status === 'free') {
+          // Provision new device on this IP
+          if (hasPermission('manage_network')) {
+              onAddDevice({ 
+                  ip_address: cell.ip,
+                  location: selectedSubnet?.location
+              });
+          }
+      }
+  };
+
   if (showSubnetForm) {
-      return <SubnetForm onClose={() => setShowSubnetForm(false)} onSubmit={handleCreateSubnet} />;
+      return <SubnetForm onClose={() => setShowSubnetForm(false)} onSubmit={handleSaveSubnet} initialData={editingSubnet} />;
   }
 
   return (
@@ -179,6 +232,7 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                 <TabsList>
                     <TabsTrigger value="list"><List className="w-4 h-4 mr-2" /> Device List</TabsTrigger>
                     <TabsTrigger value="ipam"><GridIcon className="w-4 h-4 mr-2" /> IP Address Map</TabsTrigger>
+                    <TabsTrigger value="topology"><Share2 className="w-4 h-4 mr-2" /> Topology</TabsTrigger>
                 </TabsList>
 
                 {activeTab === 'list' && (
@@ -190,7 +244,7 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
 
                 <Flex gap={2}>
                     <Button variant="outline" size="sm" onClick={onRefresh}><RefreshCw className="w-3 h-3 mr-2" /> Refresh</Button>
-                    {hasPermission('manage_network') && <Button size="sm" onClick={onAddDevice}><Plus className="w-3 h-3 mr-2" /> Add Device</Button>}
+                    {hasPermission('manage_network') && <Button size="sm" onClick={() => onAddDevice()}><Plus className="w-3 h-3 mr-2" /> Add Device</Button>}
                 </Flex>
             </Flex>
 
@@ -250,7 +304,7 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                                 icon={Server}
                                 title="No network devices found"
                                 message={devices.length === 0 ? "Add your first network device to get started." : "No devices found matching your search."}
-                                action={devices.length === 0 && hasPermission('manage_network') ? { label: "Add Device", onClick: onAddDevice } : undefined}
+                                action={devices.length === 0 && hasPermission('manage_network') ? { label: "Add Device", onClick: () => onAddDevice() } : undefined}
                             />
                         </div>
                     )}
@@ -263,13 +317,20 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                             <div className="flex justify-between items-center">
                                 <h3 className="font-bold text-gray-900 dark:text-white text-sm">Subnets</h3>
                                 {hasPermission('manage_network') && (
-                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setShowSubnetForm(true)} title="Add Subnet">
-                                        <Plus className="w-4 h-4" />
+                                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleAddSubnetClick} title="Add Subnet">
+                                        <Plus className="w-3 h-3 mr-1" /> Add Subnet
                                     </Button>
                                 )}
                             </div>
                             <div className="space-y-2">
-                                {subnets.length === 0 && <p className="text-xs text-gray-500 italic">No subnets defined.</p>}
+                                {subnets.length === 0 && (
+                                    <div className="text-center py-6 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-lg">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-2">No subnets defined.</p>
+                                        {hasPermission('manage_network') && (
+                                            <Button size="sm" variant="ghost" className="text-xs text-primary-600 dark:text-primary-400" onClick={handleAddSubnetClick}>Create Subnet</Button>
+                                        )}
+                                    </div>
+                                )}
                                 {subnets.map(subnet => (
                                     <div 
                                         key={subnet.id}
@@ -284,14 +345,17 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                                             {subnet.vlan_id && <span className="text-[10px] bg-gray-100 dark:bg-slate-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">VLAN {subnet.vlan_id}</span>}
                                         </div>
                                         {hasPermission('manage_network') && (
-                                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-white/80 dark:bg-slate-800/80 rounded p-0.5 backdrop-blur-sm shadow-sm">
+                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" onClick={(e) => { e.stopPropagation(); handleEditSubnetClick(subnet); }}>
+                                                    <Edit2 className="w-3 h-3" />
+                                                </Button>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
                                                         <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></Button>
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader><AlertDialogTitle>Delete Subnet?</AlertDialogTitle><AlertDialogDescription>This will remove the subnet definition but not the devices.</AlertDialogDescription></AlertDialogHeader>
-                                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDeleteSubnet(subnet.id); }}>Delete</AlertDialogAction></AlertDialogFooter>
+                                                        <AlertDialogFooter><AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel><AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDeleteSubnet(subnet.id); }}>Delete</AlertDialogAction></AlertDialogFooter>
                                                     </AlertDialogContent>
                                                 </AlertDialog>
                                             </div>
@@ -327,7 +391,7 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                                     </div>
 
                                     <div className="flex gap-4 text-xs mb-2">
-                                        <Flex align="center" gap={2}><div className="w-3 h-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded"></div><span className="text-gray-600 dark:text-gray-400">Available</span></Flex>
+                                        <Flex align="center" gap={2}><div className="w-3 h-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded"></div><span className="text-gray-600 dark:text-gray-400">Available (Click to Add)</span></Flex>
                                         <Flex align="center" gap={2}><div className="w-3 h-3 bg-blue-500 rounded"></div><span className="text-gray-600 dark:text-gray-400">Gateway</span></Flex>
                                         <Flex align="center" gap={2}><div className="w-3 h-3 bg-red-500 rounded"></div><span className="text-gray-600 dark:text-gray-400">Device</span></Flex>
                                         <Flex align="center" gap={2}><div className="w-3 h-3 bg-amber-400 rounded"></div><span className="text-gray-600 dark:text-gray-400">Reserved</span></Flex>
@@ -335,25 +399,34 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
 
                                     <div className="grid grid-cols-8 sm:grid-cols-16 gap-1">
                                         {ipamData.grid.map((cell) => {
-                                            let bgClass = "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:border-gray-400 dark:hover:border-slate-500 text-gray-400 dark:text-slate-600";
-                                            if (cell.status === 'network' || cell.status === 'broadcast') bgClass = "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-500";
-                                            if (cell.status === 'gateway') bgClass = "bg-blue-500 border-blue-600 text-white dark:border-blue-400";
+                                            let bgClass = "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 text-gray-400 dark:text-slate-600 cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-700";
+                                            if (cell.status === 'network' || cell.status === 'broadcast') bgClass = "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-500 cursor-not-allowed";
+                                            if (cell.status === 'gateway') bgClass = "bg-blue-500 border-blue-600 text-white dark:border-blue-400 cursor-not-allowed";
                                             if (cell.status === 'used') bgClass = "bg-red-500 border-red-600 text-white cursor-pointer hover:bg-red-600 dark:border-red-400";
 
                                             return (
                                                 <div 
                                                     key={cell.id} 
                                                     className={`aspect-square border rounded flex items-center justify-center text-[10px] relative group transition-all ${bgClass}`}
-                                                    onClick={() => cell.usage && onEditDevice(cell.usage.device)}
+                                                    onClick={() => handleIpClick(cell)}
                                                 >
                                                     {cell.id}
-                                                    {cell.usage && (
-                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-48 bg-gray-900 text-white text-xs rounded p-2 shadow-lg pointer-events-none">
-                                                            <p className="font-bold truncate">{cell.usage.deviceName}</p>
-                                                            <p className="text-gray-300 font-mono">{cell.ip}</p>
-                                                            <p className="text-[10px] text-gray-400">{cell.usage.type}</p>
-                                                        </div>
-                                                    )}
+                                                    {/* Hover Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 w-48 bg-gray-900 text-white text-xs rounded p-2 shadow-lg pointer-events-none">
+                                                        {cell.usage ? (
+                                                            <>
+                                                                <p className="font-bold truncate">{cell.usage.deviceName}</p>
+                                                                <p className="text-gray-300 font-mono">{cell.ip}</p>
+                                                                <p className="text-[10px] text-gray-400">{cell.usage.type}</p>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <p className="font-bold text-green-400">Available</p>
+                                                                <p className="text-gray-300 font-mono">{cell.ip}</p>
+                                                                <p className="text-[10px] text-gray-400">Click to provision</p>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             );
                                         })}
@@ -365,11 +438,83 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
                                         <Network className="w-12 h-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
                                         <h3 className="text-gray-900 dark:text-white font-medium">Select a Subnet</h3>
                                         <p className="text-gray-500 text-sm mt-1">Choose a subnet from the sidebar to view IP utilization.</p>
+                                        {subnets.length === 0 && hasPermission('manage_network') && (
+                                             <Button size="sm" variant="outline" className="mt-4" onClick={handleAddSubnetClick}>Create First Subnet</Button>
+                                        )}
                                     </div>
                                 </div>
                             )}
                         </div>
                     </Grid>
+                </TabsContent>
+
+                {/* --- TOPOLOGY TAB --- */}
+                <TabsContent value="topology" className="m-0 p-6 bg-gray-50 dark:bg-slate-900 min-h-[600px]">
+                    {subnets.length === 0 ? (
+                        <EmptyState icon={Share2} title="No Topology Data" message="Add subnets and devices to see the network graph." />
+                    ) : (
+                        <div className="space-y-12">
+                            {topologyData.map((topo, idx) => (
+                                <div key={topo.subnet.id} className="relative">
+                                    {/* Connection Lines (SVG Overlay) */}
+                                    <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{ overflow: 'visible' }}>
+                                        {/* Lines will be drawn conceptually by CSS borders for simplicity in this grid layout */}
+                                        {/* Drawing lines from Center Subnet to Devices below */}
+                                    </svg>
+
+                                    <div className="flex flex-col items-center z-10 relative">
+                                        {/* Level 1: Subnet Cloud */}
+                                        <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-full flex flex-col items-center justify-center w-48 h-32 shadow-sm text-center">
+                                            <Globe className="w-8 h-8 text-blue-600 dark:text-blue-400 mb-1" />
+                                            <h3 className="font-bold text-blue-900 dark:text-blue-200 text-sm">{topo.subnet.name}</h3>
+                                            <span className="text-xs font-mono text-blue-700 dark:text-blue-300">{topo.subnet.cidr}</span>
+                                            {topo.subnet.vlan_id && <span className="text-[10px] bg-white dark:bg-slate-800 px-1.5 rounded border border-blue-100 dark:border-blue-900 mt-1">VLAN {topo.subnet.vlan_id}</span>}
+                                        </div>
+
+                                        {/* Level 2: Devices */}
+                                        {topo.devices.length > 0 ? (
+                                            <div className="flex flex-wrap justify-center gap-6 relative">
+                                                {/* Vertical Connector Line from Subnet */}
+                                                <div className="absolute -top-8 left-1/2 w-0.5 h-8 bg-gray-300 dark:bg-slate-600 -translate-x-1/2"></div>
+                                                
+                                                {/* Horizontal Connector Bar if multiple devices */}
+                                                {topo.devices.length > 1 && (
+                                                    <div className="absolute -top-4 left-4 right-4 h-0.5 bg-gray-300 dark:bg-slate-600"></div>
+                                                )}
+
+                                                {topo.devices.map(device => {
+                                                    const isGateway = topo.gatewayDevice?.id === device.id;
+                                                    return (
+                                                        <div key={device.id} className="flex flex-col items-center relative pt-4 group">
+                                                            {/* Vertical Connector to Device */}
+                                                            <div className="absolute -top-4 left-1/2 w-0.5 h-4 bg-gray-300 dark:bg-slate-600 -translate-x-1/2"></div>
+                                                            
+                                                            <div 
+                                                                onClick={() => onEditDevice(device)}
+                                                                className={`w-40 p-3 bg-white dark:bg-slate-800 border rounded-lg shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col items-center text-center ${isGateway ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-200 dark:border-slate-700'}`}
+                                                            >
+                                                                <div className={`p-2 rounded-full mb-2 ${isGateway ? 'bg-blue-100 dark:bg-blue-900/50' : 'bg-gray-100 dark:bg-slate-700'}`}>
+                                                                    <DeviceIcon type={device.type} className={`w-5 h-5 ${isGateway ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+                                                                </div>
+                                                                <p className="font-bold text-xs text-gray-900 dark:text-white truncate w-full">{device.name}</p>
+                                                                <p className="font-mono text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{device.ip_address}</p>
+                                                                {isGateway && <span className="text-[9px] uppercase font-bold text-blue-600 dark:text-blue-400 mt-1">Gateway</span>}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-400 italic mt-4">No connected devices detected.</div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Separator between subnets */}
+                                    {idx < topologyData.length - 1 && <div className="border-b border-gray-200 dark:border-slate-700 w-full my-12"></div>}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </TabsContent>
             </CardContent>
           </Tabs>
