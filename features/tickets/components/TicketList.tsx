@@ -6,7 +6,6 @@ import { TicketStatusBadge, TicketPriorityBadge, TicketCategoryBadge } from '../
 import { Card } from '../../../components/ui/card';
 import { Input } from '../../../components/ui/input';
 import { Select } from '../../../components/ui/select';
-import { Button } from '../../../components/ui/button';
 import { Flex } from '../../../components/ui/flex';
 import { Grid } from '../../../components/ui/grid';
 import { EmptyState } from '../../../components/ui/empty-state';
