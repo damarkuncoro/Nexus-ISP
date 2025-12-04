@@ -32,6 +32,13 @@ import { BillingSection } from './features/billing/components/BillingSection';
 
 import { AlertsView } from './features/alerts/components/AlertsView';
 
+import { SettingsView } from './features/settings/components/SettingsView';
+import { ReportsView } from './features/reports/components/ReportsView';
+import { KnowledgeBase } from './features/knowledge-base/components/KnowledgeBase';
+import { CoverageMap } from './features/map/components/CoverageMap';
+import { LoginView } from './features/auth/components/LoginView';
+import { ProfileView } from './features/auth/components/ProfileView';
+
 // New Hooks
 import { useTickets } from './features/tickets/hooks/useTickets';
 import { useCustomers } from './features/customers/hooks/useCustomers';
@@ -41,15 +48,9 @@ import { useDevices } from './features/network/hooks/useDevices';
 import { useInventory } from './features/inventory/hooks/useInventory';
 import { useFinance } from './features/billing/hooks/useFinance';
 
-// Old Imports / Components
-import { SettingsView } from './components/SettingsView';
+// Old Imports / Components (Hooks still shared)
 import { AccessDenied } from './components/AccessDenied';
 import { CommandPalette } from './components/CommandPalette';
-import { CoverageMap } from './components/CoverageMap';
-import { LoginView } from './components/LoginView';
-import { KnowledgeBase } from './components/KnowledgeBase';
-import { ReportsView } from './components/ReportsView';
-import { ProfileView } from './components/ProfileView';
 import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem, EmployeeRole } from './types';
 import { Plus, Loader2 } from 'lucide-react';
 import { SETUP_SQL } from './constants';
@@ -94,7 +95,7 @@ export const App: React.FC = () => {
   const { items: inventoryItems, addItem: addInventoryItem, editItem: editInventoryItem } = useInventory(); 
   const { invoices, loadInvoices } = useFinance();
 
-  // Old hooks (to be migrated)
+  // Old hooks (to be migrated or kept shared)
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
   const { departments, loading: departmentsLoading, loadDepartments } = useDepartments();
 
