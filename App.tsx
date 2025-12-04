@@ -3,26 +3,46 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/Layout';
 import { DashboardView } from './components/DashboardView';
 import { ClientDashboard } from './components/ClientDashboard';
-import { TicketList } from './components/TicketList';
-import { TicketForm } from './components/forms/TicketForm';
-import { TicketDetail } from './components/TicketDetail';
-import { CustomerList } from './components/CustomerList';
-import { CustomerForm } from './components/forms/CustomerForm';
+
+// Features Imports - Refactored
+import { TicketList } from './features/tickets/components/TicketList';
+import { TicketForm } from './features/tickets/components/TicketForm';
+import { TicketDetail } from './components/TicketDetail'; 
+
+import { CustomerList } from './features/customers/components/CustomerList';
+import { CustomerForm } from './features/customers/components/CustomerForm';
 import { CustomerDetail } from './components/CustomerDetail';
-import { PlansView } from './components/PlansView';
-import { PlanDetail } from './components/PlanDetail';
-import { PlanForm } from './components/forms/PlanForm';
-import { NetworkView } from './components/NetworkView';
-import { DeviceForm } from './components/forms/DeviceForm';
-import { EmployeeList } from './components/EmployeeList';
-import { EmployeeForm } from './components/forms/EmployeeForm';
-import { EmployeeDetail } from './components/EmployeeDetail';
-import { InventoryView } from './components/InventoryView';
-import { InventoryForm } from './components/forms/InventoryForm';
-import { FinanceView } from './components/FinanceView';
-import { BillingSection } from './components/BillingSection';
+
+import { PlansView } from './features/plans/components/PlansView';
+import { PlanDetail } from './features/plans/components/PlanDetail';
+import { PlanForm } from './features/plans/components/PlanForm';
+
+import { EmployeeList } from './features/employees/components/EmployeeList';
+import { EmployeeForm } from './features/employees/components/EmployeeForm';
+import { EmployeeDetail } from './features/employees/components/EmployeeDetail';
+
+import { NetworkView } from './features/network/components/NetworkView';
+import { DeviceForm } from './features/network/components/DeviceForm';
+
+import { InventoryView } from './features/inventory/components/InventoryView';
+import { InventoryForm } from './features/inventory/components/InventoryForm';
+
+import { FinanceView } from './features/billing/components/FinanceView';
+import { BillingSection } from './features/billing/components/BillingSection';
+
+import { AlertsView } from './features/alerts/components/AlertsView';
+
+// New Hooks
+import { useTickets } from './features/tickets/hooks/useTickets';
+import { useCustomers } from './features/customers/hooks/useCustomers';
+import { usePlans } from './features/plans/hooks/usePlans';
+import { useEmployees } from './features/employees/hooks/useEmployees';
+import { useDevices } from './features/network/hooks/useDevices';
+import { useInventory } from './features/inventory/hooks/useInventory';
+import { useFinance } from './features/billing/hooks/useFinance';
+
+// Old Imports / Components
 import { SettingsView } from './components/SettingsView';
-import { AlertsView } from './components/AlertsView';
 import { AccessDenied } from './components/AccessDenied';
 import { CommandPalette } from './components/CommandPalette';
 import { CoverageMap } from './components/CoverageMap';
@@ -33,16 +53,10 @@ import { ProfileView } from './components/ProfileView';
 import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem, EmployeeRole } from './types';
 import { Plus, Loader2 } from 'lucide-react';
 import { SETUP_SQL } from './constants';
-import { useTickets } from './hooks/useTickets';
-import { useCustomers } from './hooks/useCustomers';
-import { usePlans } from './hooks/usePlans';
-import { useDevices } from './hooks/useDevices';
-import { useEmployees } from './hooks/useEmployees';
+
 import { useCategories } from './hooks/useCategories';
 import { useSettings } from './hooks/useSettings';
 import { useDepartments } from './hooks/useDepartments';
-import { useInventory } from './hooks/useInventory';
-import { useFinance } from './hooks/useFinance';
 import { useAuth } from './contexts/AuthContext';
 import { useToast } from './contexts/ToastContext';
 import { getSafeErrorMessage, isSetupError } from './utils/errorHelpers';
@@ -71,15 +85,18 @@ export const App: React.FC = () => {
   
   const { currency, saveCurrency, loading: settingsLoading } = useSettings();
 
+  // Used new hooks
   const { tickets, loading: ticketsLoading, error: ticketsError, loadTickets, addTicket, editTicket, removeTicket } = useTickets();
   const { customers, loading: customersLoading, error: customersError, loadCustomers, addCustomer, editCustomer, removeCustomer } = useCustomers();
   const { plans, loading: plansLoading, loadPlans, addPlan, removePlan } = usePlans();
-  const { devices, loading: devicesLoading, loadDevices, addDevice, editDevice, removeDevice } = useDevices();
   const { employees, loading: employeesLoading, loadEmployees, addEmployee, editEmployee, removeEmployee } = useEmployees();
-  const { categories, loading: categoriesLoading, loadCategories } = useCategories();
-  const { departments, loading: departmentsLoading, loadDepartments } = useDepartments();
+  const { devices, loading: devicesLoading, loadDevices, addDevice, editDevice, removeDevice } = useDevices();
   const { items: inventoryItems, addItem: addInventoryItem, editItem: editInventoryItem } = useInventory(); 
   const { invoices, loadInvoices } = useFinance();
+
+  // Old hooks (to be migrated)
+  const { categories, loading: categoriesLoading, loadCategories } = useCategories();
+  const { departments, loading: departmentsLoading, loadDepartments } = useDepartments();
 
   const loading = ticketsLoading || customersLoading || plansLoading || devicesLoading || employeesLoading || categoriesLoading || departmentsLoading || settingsLoading;
   const globalError = ticketsError || customersError;
@@ -296,7 +313,6 @@ export const App: React.FC = () => {
         case 'alerts': return <AlertsView onCreateTicket={openCreateTicketFromAlert} />;
         case 'finance': 
             if (isCustomer) {
-                // Find current user's customer profile
                 const myCustomerProfile = customers.find(c => c.email === currentUser.email);
                 if (myCustomerProfile) {
                     return <BillingSection customer={myCustomerProfile} currency={currency} plans={plans} />;
@@ -309,7 +325,6 @@ export const App: React.FC = () => {
         case 'kb': return <KnowledgeBase />;
         case 'profile': return <ProfileView />;
         case 'tickets': 
-          // Filter tickets for customers
           const visibleTickets = isCustomer 
             ? tickets.filter(t => t.customer_id === (customers.find(c => c.email === currentUser.email)?.id || '')) 
             : tickets;
@@ -406,7 +421,6 @@ export const App: React.FC = () => {
 
   const shouldShowAddButton = () => {
       const isCustomer = currentUser.role === EmployeeRole.CUSTOMER;
-      // Allow customers to create tickets only
       if (isCustomer) {
           return view === 'tickets';
       }

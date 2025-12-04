@@ -2,9 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Customer, Ticket, NetworkDevice, SubscriptionPlan, InstallationStatus, CustomerStatus, CustomerType, AuditAction } from '../types';
 import { Mail, Building, MapPin, Wifi, Calendar, Shield, CreditCard, LayoutDashboard, Plus, Router, HardHat, Phone, Globe, FileText, Activity, Clock, FileClock, User } from 'lucide-react';
-import { TicketList } from './TicketList';
-import { BillingSection } from './BillingSection';
-import { CustomerDevices } from './CustomerDevices';
+import { TicketList } from '../features/tickets/components/TicketList';
+import { BillingSection } from '../features/billing/components/BillingSection';
+import { CustomerDevices } from '../features/network/components/CustomerDevices';
 import { CustomerStatusBadge, InstallationStatusBadge } from './StatusBadges';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
