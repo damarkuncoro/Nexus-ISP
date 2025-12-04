@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS public.departments CASCADE;
 DROP TABLE IF EXISTS public.inventory_items CASCADE;
 DROP TABLE IF EXISTS public.network_alerts CASCADE;
 DROP TABLE IF EXISTS public.knowledge_articles CASCADE;
+DROP TABLE IF EXISTS public.subnets CASCADE;
 
 -- 1. Create Plans Table
 create table public.plans (
@@ -235,7 +236,19 @@ create table public.knowledge_articles (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 15. Create Audit Logs Table
+-- 15. Create Subnets Table (IPAM)
+create table public.subnets (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  cidr text not null,
+  gateway text,
+  vlan_id text,
+  location text,
+  description text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 16. Create Audit Logs Table
 create table public.audit_logs (
   id uuid default gen_random_uuid() primary key,
   action text not null,
@@ -246,7 +259,7 @@ create table public.audit_logs (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 16. Create Indexes
+-- 17. Create Indexes
 create index tickets_customer_id_idx on public.tickets(customer_id);
 create index customers_plan_id_idx on public.customers(plan_id);
 create index invoices_customer_id_idx on public.invoices(customer_id);
@@ -258,8 +271,9 @@ create index audit_logs_created_at_idx on public.audit_logs(created_at);
 create index inventory_sku_idx on public.inventory_items(sku);
 create index network_alerts_timestamp_idx on public.network_alerts(timestamp);
 create index kb_category_idx on public.knowledge_articles(category);
+create index subnets_cidr_idx on public.subnets(cidr);
 
--- 17. Enable RLS
+-- 18. Enable RLS
 alter table public.customers enable row level security;
 alter table public.tickets enable row level security;
 alter table public.plans enable row level security;
@@ -275,9 +289,10 @@ alter table public.departments enable row level security;
 alter table public.inventory_items enable row level security;
 alter table public.network_alerts enable row level security;
 alter table public.knowledge_articles enable row level security;
+alter table public.subnets enable row level security;
 alter table public.audit_logs enable row level security;
 
--- 18. Create Policies
+-- 19. Create Policies
 create policy "Public Access Customers" on public.customers for all using (true);
 create policy "Public Access Tickets" on public.tickets for all using (true);
 create policy "Public Access Plans" on public.plans for all using (true);
@@ -293,9 +308,10 @@ create policy "Public Access Departments" on public.departments for all using (t
 create policy "Public Access Inventory" on public.inventory_items for all using (true);
 create policy "Public Access Alerts" on public.network_alerts for all using (true);
 create policy "Public Access Articles" on public.knowledge_articles for all using (true);
+create policy "Public Access Subnets" on public.subnets for all using (true);
 create policy "Public Access Audit" on public.audit_logs for all using (true);
 
--- 19. Seed Data
+-- 20. Seed Data
 insert into public.plans (name, price, download_speed, upload_speed) values 
 ('Home Fiber Starter', 29.99, '50 Mbps', '10 Mbps'),
 ('Home Fiber Plus', 49.99, '100 Mbps', '50 Mbps'),
@@ -338,6 +354,12 @@ insert into public.knowledge_articles (title, content, category, tags, author_na
 ('Configuring PPPoE on MikroTik', 'Go to PPP -> Interface. Add New PPPoE Client. Select Ether1 (WAN). Enter Username/Password from CRM.', 'Provisioning', '{"mikrotik", "pppoe", "setup"}', 'Alex Net'),
 ('Fiber Cut Escalation Protocol', 'If a fiber cut is confirmed:\n1. Create a Critical Ticket.\n2. Notify Field Ops Manager.\n3. Send SMS blast to affected ODP area.', 'SOP', '{"fiber", "outage", "emergency"}', 'Mike Chief'),
 ('Billing Cycle Explanation', 'Invoices are generated on the 1st of each month. Payment is due by the 15th. Suspension occurs on the 20th if unpaid.', 'Billing', '{"invoice", "policy"}', 'Sarah Support');
+
+-- IPAM Seed Data (Interconnected with potential devices)
+insert into public.subnets (name, cidr, gateway, vlan_id, description, location) values
+('Management LAN', '192.168.1.0/24', '192.168.1.1', '10', 'Core network infrastructure and servers', 'HQ Server Room'),
+('Customer Pool A', '10.20.100.0/24', '10.20.100.1', '100', 'PPPoE Pool for North District', 'OLT-North'),
+('Public WiFi', '172.16.50.0/24', '172.16.50.1', '50', 'Guest network', 'HQ Lobby');
 
 insert into public.audit_logs (action, entity, details, performed_by) values
 ('system', 'System', 'System initialized with default data', 'System');`;

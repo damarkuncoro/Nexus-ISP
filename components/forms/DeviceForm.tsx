@@ -16,7 +16,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 interface DeviceFormProps {
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
-  initialData?: NetworkDevice;
+  initialData?: Partial<NetworkDevice>; // Changed to Partial to support pre-filling just IP
   customerId?: string;
 }
 
@@ -44,17 +44,20 @@ export const DeviceForm: React.FC<DeviceFormProps> = ({ onClose, onSubmit, initi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
 
+  // Determine if we are truly editing an existing record or just pre-filling a new one
+  const isEditMode = !!(initialData && initialData.id);
+
   useEffect(() => {
     loadInventory();
   }, [loadInventory]);
 
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name);
+      setName(initialData.name || '');
       setIpAddress(initialData.ip_address || '');
-      setType(initialData.type);
-      setStatus(initialData.status);
-      setLocation(initialData.location || '');
+      setType(initialData.type || (customerId ? DeviceType.CPE : DeviceType.ROUTER));
+      setStatus(initialData.status || DeviceStatus.ONLINE);
+      setLocation(initialData.location || (customerId ? 'Customer Premises' : ''));
       setModel(initialData.model || '');
       setSerialNumber(initialData.serial_number || '');
       setFirmwareVersion(initialData.firmware_version || '');
@@ -130,7 +133,7 @@ export const DeviceForm: React.FC<DeviceFormProps> = ({ onClose, onSubmit, initi
       });
 
       // If we used an inventory item and we are creating a NEW device (not editing), deduct stock
-      if (selectedInventoryId && !initialData) {
+      if (selectedInventoryId && !isEditMode) {
           await adjustStock(selectedInventoryId, -1);
       }
 
@@ -165,7 +168,7 @@ export const DeviceForm: React.FC<DeviceFormProps> = ({ onClose, onSubmit, initi
              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
          </Button>
          <div>
-             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{initialData ? 'Edit Device Configuration' : 'Register New Device'}</h1>
+             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{isEditMode ? 'Edit Device Configuration' : 'Register New Device'}</h1>
              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage network hardware, status, and technical parameters</p>
          </div>
       </div>
@@ -257,7 +260,7 @@ export const DeviceForm: React.FC<DeviceFormProps> = ({ onClose, onSubmit, initi
 
                     <TabsContent value="specs" className="mt-0 space-y-8 animate-in slide-in-from-right-4 duration-300">
                         {/* Inventory Linking Section */}
-                        {!initialData && (
+                        {!isEditMode && (
                             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-lg p-4 mb-6">
                                 <Flex align="center" gap={2} className="mb-2 text-blue-800 dark:text-blue-300 font-medium text-sm">
                                     <Package className="w-4 h-4" /> Source from Warehouse (Optional)
@@ -440,7 +443,7 @@ export const DeviceForm: React.FC<DeviceFormProps> = ({ onClose, onSubmit, initi
                         ) : (
                             <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting} className="min-w-[140px]">
                                 <Save className="w-4 h-4 mr-2" /> 
-                                {initialData ? 'Update Device' : 'Register Device'}
+                                {isEditMode ? 'Update Device' : 'Register Device'}
                             </Button>
                         )}
                     </Flex>

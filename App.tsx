@@ -83,7 +83,7 @@ export const App: React.FC = () => {
 
   const [editingTicket, setEditingTicket] = useState<Partial<Ticket> | null>(null);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-  const [editingDevice, setEditingDevice] = useState<NetworkDevice | null>(null);
+  const [editingDevice, setEditingDevice] = useState<Partial<NetworkDevice> | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [editingInventory, setEditingInventory] = useState<InventoryItem | null>(null);
   const [deviceCustomerId, setDeviceCustomerId] = useState<string | undefined>(undefined);
@@ -186,7 +186,7 @@ export const App: React.FC = () => {
   const handleCreatePlan = async (d:any) => { try { await addPlan(d); setView('plans'); toast.success('Plan created.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleDeletePlan = async (id:string) => { try { await removePlan(id); if(selectedPlan?.id===id) setSelectedPlan(null); toast.success('Plan deleted.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleCreateDevice = async (d:any) => { try { await addDevice(d); setView(deviceCustomerId ? 'customers' : 'network'); setDeviceCustomerId(undefined); toast.success('Device added.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
-  const handleUpdateDevice = async (d:any) => { if(editingDevice) try { await editDevice(editingDevice.id, d); setView(deviceCustomerId ? 'customers' : 'network'); setEditingDevice(null); setDeviceCustomerId(undefined); toast.success('Device updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
+  const handleUpdateDevice = async (d:any) => { if(editingDevice && editingDevice.id) try { await editDevice(editingDevice.id, d); setView(deviceCustomerId ? 'customers' : 'network'); setEditingDevice(null); setDeviceCustomerId(undefined); toast.success('Device updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleDeleteDevice = async (id:string) => { try { await removeDevice(id); toast.success('Device removed.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleCreateEmployee = async (d:any) => { try { await addEmployee(d); setView('employees'); toast.success('Team member added.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
   const handleUpdateEmployee = async (d:any) => { if(editingEmployee) try { await editEmployee(editingEmployee.id, d); setView('employees'); setEditingEmployee(null); if(selectedEmployee?.id===editingEmployee.id) setSelectedEmployee({...selectedEmployee, ...d}); toast.success('Team member updated.'); } catch(e) { toast.error(getSafeErrorMessage(e)); }};
@@ -203,7 +203,7 @@ export const App: React.FC = () => {
   const openCreateCustomer = () => { setView('customer-form'); };
   const openCreatePlan = () => { setEditingPlan(null); setView('plan-form'); };
   const openEditPlan = (plan: SubscriptionPlan) => { setEditingPlan(plan); setView('plan-form'); };
-  const openCreateDevice = () => { setEditingDevice(null); setView('device-form'); };
+  const openCreateDevice = (defaults?: Partial<NetworkDevice>) => { setEditingDevice(defaults || null); setView('device-form'); };
   const openEditDevice = (device: NetworkDevice) => { setEditingDevice(device); setView('device-form'); };
   const openCustomerDeviceForm = (customerId: string, device?: NetworkDevice) => { setDeviceCustomerId(customerId); setEditingDevice(device || null); setView('device-form'); };
   const openCreateEmployee = () => { setEditingEmployee(null); setView('employee-form'); };
@@ -216,7 +216,7 @@ export const App: React.FC = () => {
           dashboard: 'Dashboard Overview', alerts: 'Network Alerts',
           customers: selectedCustomer ? 'Subscriber Details' : 'Subscriber Management', 'customer-form': 'Subscriber Form',
           plans: selectedPlan ? 'Plan Details' : 'Service Packages', 'plan-form': editingPlan ? 'Edit Plan' : 'New Plan',
-          network: 'Network Infrastructure', 'device-form': editingDevice ? 'Edit Device' : 'New Device',
+          network: 'Network Infrastructure', 'device-form': editingDevice && editingDevice.id ? 'Edit Device' : 'New Device',
           settings: 'System Settings',
           tickets: selectedTicket ? 'Ticket Details' : 'Ticket Management', 'ticket-form': editingTicket?.id ? 'Edit Ticket' : 'New Ticket',
           employees: selectedEmployee ? 'Team Member Profile' : 'Team Management', 'employee-form': editingEmployee ? 'Edit Member' : 'New Member',
@@ -241,7 +241,7 @@ export const App: React.FC = () => {
     if (view === 'ticket-form') return <TicketForm onClose={() => setView('tickets')} onSubmit={editingTicket && editingTicket.id ? (d) => handleUpdateTicket(editingTicket.id!, d) : handleCreateTicket} initialData={editingTicket || undefined} isLoading={false} customers={customers} employees={employees} categories={categories} />;
     if (view === 'customer-form') return <CustomerForm onClose={() => setView('customers')} onSubmit={handleCreateCustomer} plans={plans} currency={currency} />;
     if (view === 'plan-form') return <PlanForm onClose={() => setView('plans')} onSubmit={handleCreatePlan} initialData={editingPlan || undefined} currency={currency} />;
-    if (view === 'device-form') return <DeviceForm onClose={() => setView(deviceCustomerId ? 'customers' : 'network')} onSubmit={editingDevice ? handleUpdateDevice : handleCreateDevice} initialData={editingDevice || undefined} customerId={deviceCustomerId} />;
+    if (view === 'device-form') return <DeviceForm onClose={() => setView(deviceCustomerId ? 'customers' : 'network')} onSubmit={editingDevice && editingDevice.id ? handleUpdateDevice : handleCreateDevice} initialData={editingDevice as NetworkDevice} customerId={deviceCustomerId} />;
     if (view === 'employee-form') return <EmployeeForm onClose={() => setView('employees')} onSubmit={editingEmployee ? handleUpdateEmployee : handleCreateEmployee} initialData={editingEmployee || undefined} departments={departments} />;
     if (view === 'inventory-form') return <InventoryForm onClose={() => setView('inventory')} onSubmit={editingInventory ? handleUpdateInventory : handleCreateInventory} initialData={editingInventory || undefined} />;
     
@@ -397,7 +397,7 @@ export const App: React.FC = () => {
         actions={{
           createTicket: () => openCreateTicket(),
           createCustomer: openCreateCustomer,
-          createDevice: openCreateDevice,
+          createDevice: () => openCreateDevice(),
           createPlan: openCreatePlan,
           logout: logout
         }}

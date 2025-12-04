@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
-import { NetworkDevice, DeviceStatus, DeviceType } from '../types';
-import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle, Trash2, Edit2, Grid as GridIcon, List } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { NetworkDevice, DeviceStatus, DeviceType, Subnet } from '../types';
+import { Server, Wifi, Router, Box, Activity, Plus, Search, MapPin, Globe, RefreshCw, AlertTriangle, CheckCircle, Trash2, Edit2, Grid as GridIcon, List, Hash, Network } from 'lucide-react';
 import { DeviceStatusBadge } from './StatusBadges';
 import { Grid, GridItem } from './ui/grid';
 import { Flex } from './ui/flex';
@@ -10,8 +10,11 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { useAuth } from '../contexts/AuthContext';
+import { useSubnets } from '../hooks/useSubnets';
+import { SubnetForm } from './forms/SubnetForm';
 import { EmptyState } from './ui/empty-state';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { useToast } from '../contexts/ToastContext';
 
 interface NetworkViewProps {
   devices: NetworkDevice[];
@@ -43,7 +46,23 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('list');
+  const [showSubnetForm, setShowSubnetForm] = useState(false);
+  const [selectedSubnet, setSelectedSubnet] = useState<Subnet | null>(null);
+  
+  const { subnets, loadSubnets, addSubnet, removeSubnet } = useSubnets();
   const { hasPermission } = useAuth();
+  const toast = useToast();
+
+  useEffect(() => {
+      loadSubnets();
+  }, [loadSubnets]);
+
+  // Set default subnet on load
+  useEffect(() => {
+      if (subnets.length > 0 && !selectedSubnet) {
+          setSelectedSubnet(subnets[0]);
+      }
+  }, [subnets, selectedSubnet]);
 
   const filteredDevices = devices.filter(d => 
     d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,26 +77,67 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
     warning: devices.filter(d => d.status === DeviceStatus.WARNING).length
   };
 
-  // IPAM Logic
+  // IPAM Grid Calculation
   const ipamData = useMemo(() => {
-      // Mock Subnet 192.168.1.x for visualization
-      const subnetPrefix = "192.168.1.";
+      if (!selectedSubnet) return { grid: [], utilization: 0, usedCount: 0, freeCount: 0 };
+
+      // Basic support for /24 visualization
+      const cidrParts = selectedSubnet.cidr.split('/');
+      const ipParts = cidrParts[0].split('.');
+      const prefix = `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.`;
+      
+      // Collect all IPs from devices and their interfaces
+      const usedIpsMap = new Map<string, { deviceName: string, type: string, device: NetworkDevice }>();
+      
+      devices.forEach(d => {
+          if (d.ip_address) usedIpsMap.set(d.ip_address, { deviceName: d.name, type: 'Device IP', device: d });
+          d.interfaces?.forEach(intf => {
+              if (intf.ip_address) usedIpsMap.set(intf.ip_address, { deviceName: `${d.name} (${intf.name})`, type: 'Interface IP', device: d });
+          });
+      });
+
       const grid = Array.from({ length: 256 }, (_, i) => {
-          const ip = `${subnetPrefix}${i}`;
-          const device = devices.find(d => d.ip_address === ip);
-          let status = 'free';
-          if (i === 0 || i === 255) status = 'reserved';
-          if (i === 1) status = 'gateway';
-          if (device) status = 'used';
+          const ip = `${prefix}${i}`;
+          const usage = usedIpsMap.get(ip);
           
-          return { id: i, ip, status, device };
+          let status = 'free';
+          if (i === 0) status = 'network';
+          if (i === 255) status = 'broadcast';
+          if (ip === selectedSubnet.gateway) status = 'gateway';
+          if (usage) status = 'used';
+          
+          return { id: i, ip, status, usage };
       });
 
       const usedCount = grid.filter(g => g.status === 'used').length;
-      const utilization = Math.round((usedCount / 254) * 100); // Exclude 0 and 255
+      const utilization = Math.round((usedCount / 254) * 100);
 
       return { grid, utilization, usedCount, freeCount: 254 - usedCount };
-  }, [devices]);
+  }, [devices, selectedSubnet]);
+
+  const handleCreateSubnet = async (data: any) => {
+      try {
+          await addSubnet(data);
+          toast.success("Subnet created successfully");
+          setShowSubnetForm(false);
+      } catch (e: any) {
+          toast.error(e.message);
+      }
+  };
+
+  const handleDeleteSubnet = async (id: string) => {
+      try {
+          await removeSubnet(id);
+          toast.success("Subnet deleted");
+          if (selectedSubnet?.id === id) setSelectedSubnet(null);
+      } catch (e: any) {
+          toast.error(e.message);
+      }
+  };
+
+  if (showSubnetForm) {
+      return <SubnetForm onClose={() => setShowSubnetForm(false)} onSubmit={handleCreateSubnet} />;
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -198,71 +258,116 @@ export const NetworkView: React.FC<NetworkViewProps> = ({
 
                 <TabsContent value="ipam" className="m-0 p-6">
                     <Grid cols={1} className="lg:grid-cols-4" gap={8}>
-                        {/* Stats Sidebar */}
+                        {/* Sidebar: Subnet Selection */}
                         <div className="space-y-6">
-                            <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-slate-700">
-                                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Globe className="w-4 h-4" /> Subnet 192.168.1.0/24</h4>
-                                <div className="space-y-3">
-                                    <div>
-                                        <Flex justify="between" className="text-xs mb-1">
-                                            <span className="text-gray-500 dark:text-gray-400">Utilization</span>
-                                            <span className="font-medium text-gray-900 dark:text-white">{ipamData.utilization}%</span>
-                                        </Flex>
-                                        <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
-                                            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${ipamData.utilization}%` }}></div>
-                                        </div>
-                                    </div>
-                                    <Grid cols={2} gap={4} className="pt-2">
-                                        <div className="text-center p-2 bg-white dark:bg-slate-900 rounded border border-gray-100 dark:border-slate-700">
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">Used</p>
-                                            <p className="text-lg font-bold text-gray-900 dark:text-white">{ipamData.usedCount}</p>
-                                        </div>
-                                        <div className="text-center p-2 bg-white dark:bg-slate-900 rounded border border-gray-100 dark:border-slate-700">
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">Free</p>
-                                            <p className="text-lg font-bold text-green-600 dark:text-green-500">{ipamData.freeCount}</p>
-                                        </div>
-                                    </Grid>
-                                </div>
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-bold text-gray-900 dark:text-white text-sm">Subnets</h3>
+                                {hasPermission('manage_network') && (
+                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setShowSubnetForm(true)} title="Add Subnet">
+                                        <Plus className="w-4 h-4" />
+                                    </Button>
+                                )}
                             </div>
-
                             <div className="space-y-2">
-                                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Legend</p>
-                                <Flex align="center" gap={2}><div className="w-3 h-3 bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded"></div><span className="text-xs text-gray-600 dark:text-gray-400">Available</span></Flex>
-                                <Flex align="center" gap={2}><div className="w-3 h-3 bg-blue-500 rounded"></div><span className="text-xs text-gray-600 dark:text-gray-400">Gateway / Core</span></Flex>
-                                <Flex align="center" gap={2}><div className="w-3 h-3 bg-red-500 rounded"></div><span className="text-xs text-gray-600 dark:text-gray-400">Assigned Device</span></Flex>
-                                <Flex align="center" gap={2}><div className="w-3 h-3 bg-amber-400 rounded"></div><span className="text-xs text-gray-600 dark:text-gray-400">Reserved / Broadcast</span></Flex>
+                                {subnets.length === 0 && <p className="text-xs text-gray-500 italic">No subnets defined.</p>}
+                                {subnets.map(subnet => (
+                                    <div 
+                                        key={subnet.id}
+                                        onClick={() => setSelectedSubnet(subnet)}
+                                        className={`p-3 rounded-lg border cursor-pointer transition-colors group relative ${selectedSubnet?.id === subnet.id ? 'bg-primary-50 border-primary-200 dark:bg-primary-900/20 dark:border-primary-800' : 'bg-white border-gray-200 hover:bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700'}`}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className={`text-sm font-medium ${selectedSubnet?.id === subnet.id ? 'text-primary-700 dark:text-primary-400' : 'text-gray-900 dark:text-white'}`}>{subnet.name}</p>
+                                                <p className="text-xs text-gray-500 font-mono mt-0.5">{subnet.cidr}</p>
+                                            </div>
+                                            {subnet.vlan_id && <span className="text-[10px] bg-gray-100 dark:bg-slate-600 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">VLAN {subnet.vlan_id}</span>}
+                                        </div>
+                                        {hasPermission('manage_network') && (
+                                            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button size="icon" variant="ghost" className="h-6 w-6 text-gray-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader><AlertDialogTitle>Delete Subnet?</AlertDialogTitle><AlertDialogDescription>This will remove the subnet definition but not the devices.</AlertDialogDescription></AlertDialogHeader>
+                                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDeleteSubnet(subnet.id); }}>Delete</AlertDialogAction></AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
                         {/* Visual Grid */}
                         <div className="lg:col-span-3">
-                            <div className="grid grid-cols-8 sm:grid-cols-16 gap-1">
-                                {ipamData.grid.map((cell) => {
-                                    let bgClass = "bg-gray-50 border-gray-200 hover:bg-gray-100 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 dark:text-gray-500";
-                                    if (cell.status === 'reserved') bgClass = "bg-amber-100 border-amber-300 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-200";
-                                    if (cell.status === 'gateway') bgClass = "bg-blue-500 border-blue-600 text-white dark:border-blue-400";
-                                    if (cell.status === 'used') bgClass = "bg-red-500 border-red-600 text-white cursor-pointer hover:bg-red-600 dark:border-red-400";
-
-                                    return (
-                                        <div 
-                                            key={cell.id} 
-                                            className={`aspect-square border rounded flex items-center justify-center text-[10px] relative group transition-colors ${bgClass}`}
-                                            title={cell.device ? `${cell.device.name} (${cell.device.type})` : cell.ip}
-                                            onClick={() => cell.device && onEditDevice(cell.device)}
-                                        >
-                                            {cell.id}
-                                            {/* Tooltip on Hover */}
-                                            {cell.status === 'used' && cell.device && (
-                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-48 bg-gray-900 text-white text-xs rounded p-2 shadow-lg">
-                                                    <p className="font-bold truncate">{cell.device.name}</p>
-                                                    <p className="text-gray-300">{cell.ip}</p>
-                                                    <p className="text-[10px] text-gray-400 capitalize">{cell.device.type}</p>
-                                                </div>
-                                            )}
+                            {selectedSubnet ? (
+                                <div className="space-y-6">
+                                    <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-slate-700 flex flex-col sm:flex-row justify-between gap-4">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2"><Globe className="w-4 h-4" /> {selectedSubnet.name} ({selectedSubnet.cidr})</h4>
+                                            <p className="text-xs text-gray-500 mt-1">{selectedSubnet.description || 'No description'}</p>
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                        <div className="flex gap-4 text-xs">
+                                            <div>
+                                                <span className="block text-gray-500 mb-1">Utilization</span>
+                                                <span className="font-bold text-lg dark:text-white">{ipamData.utilization}%</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-gray-500 mb-1">Used IPs</span>
+                                                <span className="font-bold text-lg dark:text-white">{ipamData.usedCount}</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-gray-500 mb-1">Free IPs</span>
+                                                <span className="font-bold text-lg text-green-600 dark:text-green-500">{ipamData.freeCount}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 text-xs mb-2">
+                                        <Flex align="center" gap={2}><div className="w-3 h-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded"></div><span className="text-gray-600 dark:text-gray-400">Available</span></Flex>
+                                        <Flex align="center" gap={2}><div className="w-3 h-3 bg-blue-500 rounded"></div><span className="text-gray-600 dark:text-gray-400">Gateway</span></Flex>
+                                        <Flex align="center" gap={2}><div className="w-3 h-3 bg-red-500 rounded"></div><span className="text-gray-600 dark:text-gray-400">Device</span></Flex>
+                                        <Flex align="center" gap={2}><div className="w-3 h-3 bg-amber-400 rounded"></div><span className="text-gray-600 dark:text-gray-400">Reserved</span></Flex>
+                                    </div>
+
+                                    <div className="grid grid-cols-8 sm:grid-cols-16 gap-1">
+                                        {ipamData.grid.map((cell) => {
+                                            let bgClass = "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:border-gray-400 dark:hover:border-slate-500 text-gray-400 dark:text-slate-600";
+                                            if (cell.status === 'network' || cell.status === 'broadcast') bgClass = "bg-amber-100 border-amber-300 text-amber-700 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-500";
+                                            if (cell.status === 'gateway') bgClass = "bg-blue-500 border-blue-600 text-white dark:border-blue-400";
+                                            if (cell.status === 'used') bgClass = "bg-red-500 border-red-600 text-white cursor-pointer hover:bg-red-600 dark:border-red-400";
+
+                                            return (
+                                                <div 
+                                                    key={cell.id} 
+                                                    className={`aspect-square border rounded flex items-center justify-center text-[10px] relative group transition-all ${bgClass}`}
+                                                    onClick={() => cell.usage && onEditDevice(cell.usage.device)}
+                                                >
+                                                    {cell.id}
+                                                    {cell.usage && (
+                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-48 bg-gray-900 text-white text-xs rounded p-2 shadow-lg pointer-events-none">
+                                                            <p className="font-bold truncate">{cell.usage.deviceName}</p>
+                                                            <p className="text-gray-300 font-mono">{cell.ip}</p>
+                                                            <p className="text-[10px] text-gray-400">{cell.usage.type}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-slate-700">
+                                    <div className="text-center p-8">
+                                        <Network className="w-12 h-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+                                        <h3 className="text-gray-900 dark:text-white font-medium">Select a Subnet</h3>
+                                        <p className="text-gray-500 text-sm mt-1">Choose a subnet from the sidebar to view IP utilization.</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </Grid>
                 </TabsContent>

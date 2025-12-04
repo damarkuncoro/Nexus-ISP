@@ -1,21 +1,23 @@
 
 import React, { useMemo, useEffect } from 'react';
-import { Ticket, Customer, TicketStatus } from '../types';
+import { Ticket, Customer, TicketStatus, AuditAction } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Ticket as TicketIcon, AlertCircle, AlertTriangle, UserX, BarChart2, PieChart as PieChartIcon, Activity, Package } from 'lucide-react';
+import { Ticket as TicketIcon, AlertCircle, AlertTriangle, UserX, BarChart2, PieChart as PieChartIcon, Activity, Package, Clock, FileText, User } from 'lucide-react';
 import { Grid } from './ui/grid';
 import { Flex } from './ui/flex';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Table, TableBody, TableRow, TableCell } from './ui/table';
-import { TicketStatusBadge } from './StatusBadges';
+import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { useInventory } from '../hooks/useInventory';
+import { useAuditLogs } from '../hooks/useAuditLogs';
+import { useAlerts } from '../hooks/useAlerts';
 
 interface DashboardViewProps {
   tickets: Ticket[];
   customers: Customer[];
   onTicketClick: (ticket: Ticket) => void;
-  onViewChange: (view: 'tickets' | 'inventory') => void;
+  onViewChange: (view: 'tickets' | 'inventory' | 'alerts') => void;
 }
 
 const StatCard = ({ title, value, icon: Icon, colorClass, bgClass }: { title: string, value: number | string, icon: React.ElementType, colorClass: string, bgClass: string }) => (
@@ -54,10 +56,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers, onTicketClick, onViewChange }) => {
   const { items: inventoryItems, loadInventory } = useInventory();
+  const { logs, loadLogs } = useAuditLogs();
+  const { alerts, loadAlerts } = useAlerts();
 
   useEffect(() => {
       loadInventory();
-  }, [loadInventory]);
+      loadLogs();
+      loadAlerts();
+  }, [loadInventory, loadLogs, loadAlerts]);
   
   const stats = useMemo(() => {
     if (!tickets) {
@@ -75,6 +81,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
   const lowStockItems = useMemo(() => {
       return inventoryItems.filter(i => i.quantity <= i.min_quantity).slice(0, 3);
   }, [inventoryItems]);
+
+  const criticalAlerts = useMemo(() => {
+      return alerts.filter(a => a.severity === 'critical').length;
+  }, [alerts]);
 
   const ticketVolumeData = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -102,7 +112,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
 
   const COLORS = ['#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899', '#22c55e', '#64748b'];
 
-  const recentTickets = tickets.slice(0, 5);
+  // Combine logs and format for recent activity
+  const recentActivity = logs.slice(0, 6);
+
+  const getActionColor = (action: AuditAction) => {
+      switch (action) {
+          case AuditAction.CREATE: return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+          case AuditAction.UPDATE: return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20';
+          case AuditAction.DELETE: return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+          default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800';
+      }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -111,6 +131,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard Overview</h1>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Real-time operational metrics</p>
             </div>
+            {criticalAlerts > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-800 animate-pulse cursor-pointer" onClick={() => onViewChange('alerts')}>
+                    <AlertTriangle className="w-5 h-5" />
+                    <span className="text-sm font-bold">{criticalAlerts} Critical Network Alerts</span>
+                </div>
+            )}
         </div>
 
         <Grid cols={1} className="sm:grid-cols-2 lg:grid-cols-4" gap={6}>
@@ -160,22 +186,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ tickets, customers
         <Grid cols={1} className="lg:grid-cols-2" gap={6}>
             <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardHeader className="flex flex-row justify-between items-center border-b border-gray-100 dark:border-slate-700">
-                    <CardTitle className="flex items-center gap-2 text-base dark:text-white"><Activity className="w-5 h-5 text-gray-500 dark:text-gray-400" />Recent Activity</CardTitle>
-                    <Button variant="link" size="sm" onClick={() => onViewChange('tickets')} className="text-primary-600 dark:text-primary-400">View All</Button>
+                    <CardTitle className="flex items-center gap-2 text-base dark:text-white"><Activity className="w-5 h-5 text-gray-500 dark:text-gray-400" />System Activity</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <Table>
                         <TableBody>
-                            {recentTickets.map(ticket => (
-                                <TableRow key={ticket.id} onClick={() => onTicketClick(ticket)} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 border-gray-100 dark:border-slate-700">
+                            {recentActivity.length > 0 ? recentActivity.map(log => (
+                                <TableRow key={log.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 border-gray-100 dark:border-slate-700">
                                     <TableCell>
-                                        <p className="font-medium text-gray-900 dark:text-gray-200">{ticket.title}</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">#{ticket.id.slice(0,8)} • {ticket.customer?.name || 'No Customer'}</p>
+                                        <Flex align="center" gap={3}>
+                                            <div className={`p-1.5 rounded-md ${getActionColor(log.action)}`}>
+                                                <FileText className="w-3 h-3" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-sm text-gray-900 dark:text-gray-200">{log.action.toUpperCase()} <span className="text-gray-500 font-normal">{log.entity}</span></p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 max-w-[200px] truncate">{log.details}</p>
+                                            </div>
+                                        </Flex>
                                     </TableCell>
-                                    <TableCell><TicketStatusBadge status={ticket.status} /></TableCell>
-                                    <TableCell className="hidden md:table-cell text-right text-gray-500 dark:text-gray-400 text-xs">{new Date(ticket.created_at).toLocaleString()}</TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1"><User className="w-3 h-3" /> {log.performed_by}</span>
+                                            <span className="text-[10px] text-gray-400 flex items-center gap-1"><Clock className="w-2.5 h-2.5" /> {new Date(log.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                        </div>
+                                    </TableCell>
                                 </TableRow>
-                            ))}
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-center py-8 text-gray-500">No recent activity.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
