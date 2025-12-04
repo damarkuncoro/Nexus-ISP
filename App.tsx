@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/Layout';
-import { DashboardView } from './components/DashboardView';
-import { ClientDashboard } from './components/ClientDashboard';
 
-// Features Imports - Refactored
+// Feature Imports
 import { TicketList } from './features/tickets/components/TicketList';
 import { TicketForm } from './features/tickets/components/TicketForm';
-import { TicketDetail } from './components/TicketDetail'; 
+import { TicketDetail } from './features/tickets/components/TicketDetail';
+
+import { DashboardView } from './features/dashboard/components/DashboardView';
+import { ClientDashboard } from './features/dashboard/components/ClientDashboard';
 
 import { CustomerList } from './features/customers/components/CustomerList';
 import { CustomerForm } from './features/customers/components/CustomerForm';
@@ -39,7 +40,7 @@ import { CoverageMap } from './features/map/components/CoverageMap';
 import { LoginView } from './features/auth/components/LoginView';
 import { ProfileView } from './features/auth/components/ProfileView';
 
-// New Hooks
+// Hooks
 import { useTickets } from './features/tickets/hooks/useTickets';
 import { useCustomers } from './features/customers/hooks/useCustomers';
 import { usePlans } from './features/plans/hooks/usePlans';
@@ -47,19 +48,18 @@ import { useEmployees } from './features/employees/hooks/useEmployees';
 import { useDevices } from './features/network/hooks/useDevices';
 import { useInventory } from './features/inventory/hooks/useInventory';
 import { useFinance } from './features/billing/hooks/useFinance';
-
-// Old Imports / Components (Hooks still shared)
-import { AccessDenied } from './components/AccessDenied';
-import { CommandPalette } from './components/CommandPalette';
-import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem, EmployeeRole } from './types';
-import { Plus, Loader2 } from 'lucide-react';
-import { SETUP_SQL } from './constants';
-
 import { useCategories } from './hooks/useCategories';
 import { useSettings } from './hooks/useSettings';
 import { useDepartments } from './hooks/useDepartments';
 import { useAuth } from './contexts/AuthContext';
 import { useToast } from './contexts/ToastContext';
+
+// Common/Shared
+import { AccessDenied } from './components/AccessDenied';
+import { CommandPalette } from './components/CommandPalette';
+import { Ticket, Customer, SubscriptionPlan, NetworkDevice, Employee, InventoryItem, EmployeeRole } from './types';
+import { Plus, Loader2 } from 'lucide-react';
+import { SETUP_SQL } from './constants';
 import { getSafeErrorMessage, isSetupError } from './utils/errorHelpers';
 
 type AppView = 
@@ -86,7 +86,7 @@ export const App: React.FC = () => {
   
   const { currency, saveCurrency, loading: settingsLoading } = useSettings();
 
-  // Used new hooks
+  // Feature Hooks
   const { tickets, loading: ticketsLoading, error: ticketsError, loadTickets, addTicket, editTicket, removeTicket } = useTickets();
   const { customers, loading: customersLoading, error: customersError, loadCustomers, addCustomer, editCustomer, removeCustomer } = useCustomers();
   const { plans, loading: plansLoading, loadPlans, addPlan, removePlan } = usePlans();
@@ -95,7 +95,7 @@ export const App: React.FC = () => {
   const { items: inventoryItems, addItem: addInventoryItem, editItem: editInventoryItem } = useInventory(); 
   const { invoices, loadInvoices } = useFinance();
 
-  // Old hooks (to be migrated or kept shared)
+  // Shared Hooks
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
   const { departments, loading: departmentsLoading, loadDepartments } = useDepartments();
 
