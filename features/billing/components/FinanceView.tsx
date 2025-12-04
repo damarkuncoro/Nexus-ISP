@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { Customer, SubscriptionPlan, InvoiceStatus } from '../../../types';
 import { useFinance } from '../hooks/useFinance';
@@ -12,7 +11,7 @@ import { Flex } from '../../../components/ui/flex';
 import { Grid } from '../../../components/ui/grid';
 import { EmptyState } from '../../../components/ui/empty-state';
 import { useToast } from '../../../contexts/ToastContext';
-import { DollarSign, Search, Clock, PlayCircle, FileText, Download, AlertCircle, Calendar } from 'lucide-react';
+import { DollarSign, Search, Clock, PlayCircle, FileText, Download, AlertCircle, Calendar, CheckCircle2 } from 'lucide-react';
 import { InvoiceStatusBadge } from '../../../components/StatusBadges';
 import { downloadInvoice } from '../utils/invoiceGenerator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../../../components/ui/alert-dialog';
@@ -200,6 +199,11 @@ export const FinanceView: React.FC<FinanceViewProps> = ({ customers, plans, curr
                                             <Button variant="ghost" size="icon" onClick={() => handleDownload(inv)} title="Download PDF">
                                                 <Download className="w-4 h-4 text-gray-500" />
                                             </Button>
+                                            {inv.status !== InvoiceStatus.PAID && inv.status !== InvoiceStatus.CANCELLED && (
+                                                <Button variant="ghost" size="icon" onClick={() => markAsPaid(inv.id)} title="Mark as Paid" className="hover:text-green-600">
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                </Button>
+                                            )}
                                         </Flex>
                                     </TableCell>
                                 </TableRow>
